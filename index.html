@@ -91,6 +91,28 @@
     .flavio strong { color: #3dce73; }
     .total { justify-content: center; text-align: center; }
     .total strong { font-size: 36px; }
+    .race { max-width: 1180px; margin: 10px auto 0; }
+    .race-pct {
+      display: grid;
+      grid-template-columns: 1fr 140px 1fr;
+      align-items: end;
+      margin-bottom: 6px;
+      font-size: 22px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+    #lula-pct { justify-self: end; color: #ff5d57; padding-right: 10px; }
+    #flavio-pct { grid-column: 3; justify-self: start; color: #3dce73; padding-left: 10px; }
+    .race-bar {
+      display: flex;
+      height: 16px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #2a2926;
+    }
+    #lula-bar, #flavio-bar { height: 100%; width: 0; transition: width 0.55s ease; }
+    #lula-bar { background: var(--red); }
+    #flavio-bar { background: var(--green); }
     .stage {
       max-width: 1100px;
       margin: 0 auto;
@@ -267,6 +289,8 @@
     @media (max-width: 860px) {
       .scoreboard { grid-template-columns: 1fr 1fr; }
       .total { grid-column: 1 / -1; order: -1; }
+      .race-pct { grid-template-columns: 1fr 1fr; font-size: 18px; }
+      #flavio-pct { grid-column: 2; }
       .stage { grid-template-columns: 1fr; }
       #map-container { width: 46%; max-width: 210px; }
       .score strong { font-size: 32px; }
@@ -303,6 +327,16 @@
           <strong id="flavio-count">0</strong>
         </div>
       </article>
+    </div>
+    <div class="race">
+      <div class="race-pct">
+        <span id="lula-pct">0%</span>
+        <span id="flavio-pct">0%</span>
+      </div>
+      <div class="race-bar" id="race-bar" role="img" aria-label="Lula 0%, Flávio 0%">
+        <div id="lula-bar"></div>
+        <div id="flavio-bar"></div>
+      </div>
     </div>
   </header>
 
@@ -372,6 +406,6 @@
   </main>
 
   <footer>Simulador independente. Não é votação oficial e não tem ligação com o TSE.</footer>
-  <script src="script.js?v=4"></script>
+  <script src="script.js?v=5"></script>
 </body>
 </html>

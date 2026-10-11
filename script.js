@@ -243,10 +243,27 @@ function flyVote(candidate, uf) {
   }, 900);
 }
 
+function formatPct(part, total) {
+  if (!total) return '0%';
+  const rounded = Math.round((part / total) * 1000) / 10;
+  const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace('.', ',');
+  return text + '%';
+}
+
 function updateDisplay() {
-  document.getElementById('lula-count').textContent = votes.lula || 0;
-  document.getElementById('flavio-count').textContent = votes.flavio || 0;
-  document.getElementById('total-count').textContent = (votes.lula || 0) + (votes.flavio || 0);
+  const lula = votes.lula || 0;
+  const flavio = votes.flavio || 0;
+  const total = lula + flavio;
+  document.getElementById('lula-count').textContent = lula;
+  document.getElementById('flavio-count').textContent = flavio;
+  document.getElementById('total-count').textContent = total;
+  const lulaPct = total ? (lula / total) * 100 : 0;
+  const flavioPct = total ? 100 - lulaPct : 0;
+  document.getElementById('lula-pct').textContent = formatPct(lula, total);
+  document.getElementById('flavio-pct').textContent = formatPct(flavio, total);
+  document.getElementById('lula-bar').style.width = lulaPct + '%';
+  document.getElementById('flavio-bar').style.width = flavioPct + '%';
+  document.getElementById('race-bar').setAttribute('aria-label', 'Lula ' + formatPct(lula, total) + ', Flávio ' + formatPct(flavio, total));
 }
 
 function updateMap() {
