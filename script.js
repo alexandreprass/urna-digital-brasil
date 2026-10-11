@@ -15,7 +15,7 @@ const CANDIDATES = {
   flavio: { number: '22', name: 'FLÁVIO BOLSONARO', party: 'Partido: PL', photo: 'flavio.webp' }
 };
 
-let supabase = null;
+let db = null;
 let channel = null;
 let currentInput = '';
 let branco = false;
@@ -44,7 +44,7 @@ async function init() {
   await detectLocation();
   document.getElementById('online').textContent = 'Seu voto entra em ' + (UF[userState] || userState);
   try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const loaded = await loadVotes();
     if (!loaded) loadLocalVotes();
     await subscribeLive();
@@ -186,8 +186,8 @@ function vote(candidate) {
   if (channel) {
     channel.send({ type: 'broadcast', event: 'vote', payload: { candidate: candidate, state: userState } });
   }
-  if (supabase) {
-    supabase.from('votes').insert({ candidate: candidate, state: userState }).then(({ error }) => {
+  if (db) {
+    db.from('votes').insert({ candidate: candidate, state: userState }).then(({ error }) => {
       if (error) console.warn(error.message || error);
     });
   }
@@ -275,7 +275,7 @@ function saveLocalVotes() {
 }
 
 async function loadVotes() {
-  const { data, error } = await supabase.from('votes').select('candidate, state');
+  const { data, error } = await db.from('votes').select('candidate, state');
   if (error || !data) return false;
   votes = { lula: 0, flavio: 0, byState: {} };
   data.forEach((row) => {
@@ -291,7 +291,7 @@ async function loadVotes() {
 }
 
 function subscribeLive() {
-  channel = supabase.channel('urna-live');
+  channel = db.channel('urna-live');
   channel.on('broadcast', { event: 'vote' }, ({ payload }) => {
     if (!payload) return;
     applyVote(payload.candidate, payload.state, true);
