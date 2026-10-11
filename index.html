@@ -56,8 +56,9 @@
       max-width: 1180px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 1fr 140px 1fr;
+      grid-template-columns: 1fr auto 1fr;
       gap: 12px;
+      align-items: center;
     }
     .score {
       display: flex;
@@ -89,18 +90,23 @@
     .lula strong { color: #ff5d57; }
     .flavio { flex-direction: row-reverse; text-align: right; border-bottom: 3px solid var(--green); }
     .flavio strong { color: #3dce73; }
-    .count-line { display: flex; align-items: center; gap: 8px; }
-    .flavio .count-line { justify-content: flex-end; }
+    .center-score {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+    }
     .share {
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      font-size: 18px;
+      gap: 4px;
+      font-size: 28px;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
+      line-height: 1;
     }
-    .lula .share { color: #ff5d57; }
-    .flavio .share { color: #3dce73; }
+    .lula-share { color: #ff5d57; }
+    .flavio-share { color: #3dce73; }
     .trend { width: 14px; font-size: 15px; line-height: 1; }
     .trend.up { color: #3dce73; }
     .trend.down { color: #ff5d57; }
@@ -130,23 +136,23 @@
     .map-panel { min-width: 0; }
     .atlas { display: flex; align-items: center; justify-content: center; gap: 8px; }
     #map-container { width: 100%; max-width: 250px; margin: 0 auto; }
-    #globe { width: 112px; flex: none; }
+    #globe { width: 56px; flex: none; }
     .globe-face {
-      width: 112px;
-      height: 112px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       overflow: hidden;
       display: grid;
       place-items: center;
       background: radial-gradient(circle at 32% 28%, #6eb6ea, #1a5fa8 72%);
-      box-shadow: inset -10px -8px 14px rgba(0, 0, 0, 0.28), 0 0 0 3px #d5dbe0;
+      box-shadow: inset -6px -4px 8px rgba(0, 0, 0, 0.28), 0 0 0 2px #d5dbe0;
     }
-    #globe-container { width: 112px; height: 112px; display: grid; place-items: center; }
-    #globe-container svg { width: 158px; height: auto; }
+    #globe-container { width: 56px; height: 56px; display: grid; place-items: center; }
+    #globe-container svg { width: 79px; height: auto; }
     #globe-container path { fill: #efe6d4; stroke: #1a5fa8; stroke-width: 0.6; }
     #globe-container path.red { fill: var(--red); }
     #globe-container path.green { fill: var(--green); }
-    .globe-label { margin: 4px 0 0; text-align: center; color: #b7b1a8; font-size: 12px; }
+    .globe-label { margin: 3px 0 0; text-align: center; color: #b7b1a8; font-size: 10px; }
     #map-container svg { width: 100%; height: auto; display: block; }
     #map-container .state {
       fill: #3c424c;
@@ -310,14 +316,14 @@
     .fly.flavio { background: var(--green); }
     @media (max-width: 860px) {
       .scoreboard { grid-template-columns: 1fr 1fr; }
-      .total { grid-column: 1 / -1; order: -1; }
+      .center-score { grid-column: 1 / -1; order: -1; gap: 10px; }
+      .share { font-size: 20px; }
       .stage { grid-template-columns: 1fr; }
       .atlas { gap: 6px; }
       #map-container { width: auto; max-width: 190px; }
-      #globe, .globe-face, #globe-container { width: 86px; }
-      .globe-face, #globe-container { height: 86px; }
-      #globe-container svg { width: 124px; }
-      .share { font-size: 15px; }
+      #globe, .globe-face, #globe-container { width: 43px; }
+      .globe-face, #globe-container { height: 43px; }
+      #globe-container svg { width: 62px; }
       .score strong { font-size: 32px; }
       .urna { transform: none; }
       .urna-face { grid-template-columns: 1fr; }
@@ -336,26 +342,24 @@
         <img src="lula.webp" alt="Lula">
         <div>
           <span>Lula · 13</span>
-          <div class="count-line">
-            <strong id="lula-count">0</strong>
-            <span class="share"><span id="lula-pct">0%</span><span id="lula-trend" class="trend"></span></span>
+          <strong id="lula-count">0</strong>
+        </div>
+      </article>
+      <div class="center-score">
+        <span class="share lula-share"><span id="lula-pct">0%</span><span id="lula-trend" class="trend"></span></span>
+        <article class="score total">
+          <div>
+            <span>Total</span>
+            <strong id="total-count">0</strong>
           </div>
-        </div>
-      </article>
-      <article class="score total">
-        <div>
-          <span>Total</span>
-          <strong id="total-count">0</strong>
-        </div>
-      </article>
+        </article>
+        <span class="share flavio-share"><span id="flavio-trend" class="trend"></span><span id="flavio-pct">0%</span></span>
+      </div>
       <article class="score flavio" id="flavio-score">
         <img src="flavio.webp" alt="Flávio Bolsonaro">
         <div>
           <span>Flávio · 22</span>
-          <div class="count-line">
-            <strong id="flavio-count">0</strong>
-            <span class="share"><span id="flavio-pct">0%</span><span id="flavio-trend" class="trend"></span></span>
-          </div>
+          <strong id="flavio-count">0</strong>
         </div>
       </article>
     </div>
@@ -370,11 +374,11 @@
   <main class="stage">
     <section class="map-panel">
       <div class="atlas">
-        <div id="map-container"></div>
         <div id="globe">
           <div class="globe-face"><div id="globe-container"></div></div>
           <p class="globe-label">Exterior</p>
         </div>
+        <div id="map-container"></div>
       </div>
       <p class="legend"><span class="dot red"></span>Lula na frente <span class="dot green"></span>Flávio na frente</p>
       <p id="map-tip">Passe o mouse no estado ou no país para ver os votos.</p>
