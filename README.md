@@ -25,21 +25,19 @@ Simulador moderno de urna eletrônica com mapa do Brasil por estado, detecção 
 3. No SQL Editor, rode:
 
 ```sql
-create table votes (
-  id uuid default gen_random_uuid() primary key,
-  candidate text not null check (candidate in ('lula', 'flavio')),
-  state text not null,
-  created_at timestamp with time zone default now()
+create table state_totals (
+  state text primary key,
+  lula bigint not null default 0,
+  flavio bigint not null default 0
 );
 
--- Habilitar Realtime
-alter publication supabase_realtime add table votes;
-
--- Política pública para insert e select (ajuste para produção)
-alter table votes enable row level security;
-create policy "public insert" on votes for insert with check (true);
-create policy "public select" on votes for select using (true);
+alter table state_totals enable row level security;
+create policy "public read state totals" on state_totals
+  for select to anon, authenticated using (true);
+grant select on table state_totals to anon, authenticated;
 ```
+
+O site soma com a função `cast_vote`, que faz `+1` no estado. Ela não deixa o navegador gravar um número qualquer.
 
 4. Edite `script.js` e substitua:
 

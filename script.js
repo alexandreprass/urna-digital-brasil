@@ -187,7 +187,7 @@ function vote(candidate) {
     channel.send({ type: 'broadcast', event: 'vote', payload: { candidate: candidate, state: userState } });
   }
   if (db) {
-    db.from('votes').insert({ candidate: candidate, state: userState }).then(({ error }) => {
+    db.rpc('cast_vote', { p_candidate: candidate, p_state: userState }).then(({ error }) => {
       if (error) console.warn(error.message || error);
     });
   }
@@ -275,14 +275,16 @@ function saveLocalVotes() {
 }
 
 async function loadVotes() {
-  const { data, error } = await db.from('votes').select('candidate, state');
+  const { data, error } = await db.from('state_totals').select('state, lula, flavio');
   if (error || !data) return false;
   votes = { lula: 0, flavio: 0, byState: {} };
   data.forEach((row) => {
-    if (!CANDIDATES[row.candidate] || !UF[row.state]) return;
-    votes[row.candidate] += 1;
-    if (!votes.byState[row.state]) votes.byState[row.state] = { lula: 0, flavio: 0 };
-    votes.byState[row.state][row.candidate] += 1;
+    if (!UF[row.state]) return;
+    const lula = Number(row.lula) || 0;
+    const flavio = Number(row.flavio) || 0;
+    votes.byState[row.state] = { lula: lula, flavio: flavio };
+    votes.lula += lula;
+    votes.flavio += flavio;
   });
   saveLocalVotes();
   updateDisplay();
