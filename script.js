@@ -21,7 +21,7 @@ let currentInput = '';
 let branco = false;
 let locked = false;
 let origin = { kind: 'state', code: 'SP', name: 'São Paulo' };
-let votes = { lula: 0, flavio: 0, byState: {}, byCountry: {} };
+let votes = { lula: 0, flavio: 0, byState: {}, abroad: { lula: 0, flavio: 0 } };
 let shownPct = null;
 let audioCtx = null;
 
@@ -71,16 +71,15 @@ async function loadMap() {
   container.querySelectorAll('.state').forEach((el) => {
     el.addEventListener('pointerenter', () => showTip(el));
     el.addEventListener('pointerleave', () => {
-      document.getElementById('map-tip').textContent = 'Passe o mouse no estado ou no país para ver os votos.';
+      document.getElementById('map-tip').textContent = 'Passe o mouse no estado ou no exterior para ver os votos.';
     });
   });
   const globe = document.getElementById('globe-container');
   globe.innerHTML = svgMarkup(world);
-  globe.querySelectorAll('path').forEach((el) => {
-    el.addEventListener('pointerenter', () => showCountryTip(el));
-    el.addEventListener('pointerleave', () => {
-      document.getElementById('map-tip').textContent = 'Passe o mouse no estado ou no país para ver os votos.';
-    });
+  const globeBox = document.getElementById('globe');
+  globeBox.addEventListener('pointerenter', showAbroadTip);
+  globeBox.addEventListener('pointerleave', () => {
+    document.getElementById('map-tip').textContent = 'Passe o mouse no estado ou no exterior para ver os votos.';
   });
 }
 
@@ -91,15 +90,13 @@ function showTip(el) {
   document.getElementById('map-tip').textContent = nome + ' · Lula ' + st.lula + ' · Flávio ' + st.flavio;
 }
 
-function showCountryTip(el) {
-  const code = (el.id || '').toUpperCase();
-  const st = (votes.byCountry && votes.byCountry[code]) || { lula: 0, flavio: 0 };
-  const nome = el.getAttribute('data-name') || code;
-  document.getElementById('map-tip').textContent = nome + ' · Lula ' + st.lula + ' · Flávio ' + st.flavio;
+function showAbroadTip() {
+  const st = votes.abroad || { lula: 0, flavio: 0 };
+  document.getElementById('map-tip').textContent = 'Exterior · Lula ' + st.lula + ' · Flávio ' + st.flavio;
 }
 
 function placeName() {
-  if (origin.kind === 'country') return origin.name || origin.code;
+  if (origin.kind === 'country') return 'Exterior';
   return UF[origin.code] || origin.code;
 }
 
@@ -111,7 +108,7 @@ async function detectLocation() {
     if (country === 'BR' && UF[data.region_code]) {
       origin = { kind: 'state', code: data.region_code, name: UF[data.region_code] };
     } else if (/^[A-Z]{2}$/.test(country) && country !== 'BR') {
-      origin = { kind: 'country', code: country, name: data.country || country };
+      origin = { kind: 'country', code: country, name: 'Exterior' };
     }
   } catch (error) {}
 }
@@ -215,12 +212,12 @@ function vote(candidate) {
   }
   localStorage.setItem('lastVote', String(Date.now()));
   if (origin.kind === 'country') {
-    applyAbroad(candidate, origin.code, true);
+    applyAbroad(candidate, true);
     if (channel) {
-      channel.send({ type: 'broadcast', event: 'vote', payload: { candidate: candidate, country: origin.code } });
+      channel.send({ type: 'broadcast', event: 'vote', payload: { candidate: candidate, abroad: true } });
     }
     if (db) {
-      db.rpc('cast_abroad_vote', { p_candidate: candidate, p_country: origin.code }).then(({ error }) => {
+      db.rpc('cast_abroad_vote', { p_candidate: candidate }).then(({ error }) => {
         if (error) console.warn(error.message || error);
       });
     }
@@ -250,21 +247,20 @@ function applyVote(candidate, uf, animate) {
   if (animate) flyVote(candidate, uf, false);
 }
 
-function applyAbroad(candidate, country, animate) {
-  if (!CANDIDATES[candidate] || !/^[A-Z]{2}$/.test(country) || country === 'BR') return;
+function applyAbroad(candidate, animate) {
+  if (!CANDIDATES[candidate]) return;
   votes[candidate] += 1;
-  if (!votes.byCountry) votes.byCountry = {};
-  if (!votes.byCountry[country]) votes.byCountry[country] = { lula: 0, flavio: 0 };
-  votes.byCountry[country][candidate] += 1;
+  if (!votes.abroad) votes.abroad = { lula: 0, flavio: 0 };
+  votes.abroad[candidate] += 1;
   saveLocalVotes();
   updateDisplay();
   updateMap();
-  if (animate) flyVote(candidate, country, true);
+  if (animate) flyVote(candidate, '', true);
 }
 
 function flyVote(candidate, code, abroad) {
-  const svg = document.querySelector(abroad ? '#globe-container svg' : '#map-container svg');
-  const state = svg && svg.querySelector('#' + (abroad ? code : code.toLowerCase()));
+  const svg = abroad ? null : document.querySelector('#map-container svg');
+  const state = svg && svg.querySelector('#' + code.toLowerCase());
   const target = document.getElementById(candidate === 'lula' ? 'lula-score' : 'flavio-score');
   if (!target) return;
   const end = target.getBoundingClientRect();
@@ -345,27 +341,25 @@ function paintTrend(id, now) {
 
 function updateMap() {
   const svg = document.querySelector('#map-container svg');
-  if (!svg) return;
-  svg.querySelectorAll('.state').forEach((el) => {
-    el.classList.remove('red', 'green');
-    const st = votes.byState[el.id.toUpperCase()];
-    if (!st) return;
-    if (st.lula > st.flavio) el.classList.add('red');
-    else if (st.flavio > st.lula) el.classList.add('green');
-  });
+  if (svg) {
+    svg.querySelectorAll('.state').forEach((el) => {
+      el.classList.remove('red', 'green');
+      const st = votes.byState[el.id.toUpperCase()];
+      if (!st) return;
+      if (st.lula > st.flavio) el.classList.add('red');
+      else if (st.flavio > st.lula) el.classList.add('green');
+    });
+  }
   updateWorld();
 }
 
 function updateWorld() {
-  const svg = document.querySelector('#globe-container svg');
-  if (!svg) return;
-  svg.querySelectorAll('path').forEach((el) => {
-    el.classList.remove('red', 'green');
-    const row = votes.byCountry && votes.byCountry[(el.id || '').toUpperCase()];
-    if (!row) return;
-    if (row.lula > row.flavio) el.classList.add('red');
-    else if (row.flavio > row.lula) el.classList.add('green');
-  });
+  const face = document.querySelector('.globe-face');
+  if (!face) return;
+  const row = votes.abroad || { lula: 0, flavio: 0 };
+  face.classList.remove('red', 'green');
+  if (row.lula > row.flavio) face.classList.add('red');
+  else if (row.flavio > row.lula) face.classList.add('green');
 }
 
 function loadLocalVotes() {
@@ -373,7 +367,14 @@ function loadLocalVotes() {
     const saved = JSON.parse(localStorage.getItem('urnaVotes') || 'null');
     if (saved && saved.byState) {
       votes = saved;
-      if (!votes.byCountry) votes.byCountry = {};
+      if (!votes.abroad) {
+        votes.abroad = { lula: 0, flavio: 0 };
+        const old = votes.byCountry || {};
+        Object.keys(old).forEach((code) => {
+          votes.abroad.lula += old[code].lula || 0;
+          votes.abroad.flavio += old[code].flavio || 0;
+        });
+      }
     }
   } catch (error) {}
   updateDisplay();
@@ -387,8 +388,8 @@ function saveLocalVotes() {
 async function loadVotes() {
   const { data, error } = await db.from('state_totals').select('state, lula, flavio');
   if (error || !data) return false;
-  const abroad = await db.from('country_totals').select('country, lula, flavio');
-  votes = { lula: 0, flavio: 0, byState: {}, byCountry: {} };
+  const abroad = await db.from('abroad_totals').select('lula, flavio').limit(1);
+  votes = { lula: 0, flavio: 0, byState: {}, abroad: { lula: 0, flavio: 0 } };
   data.forEach((row) => {
     if (!UF[row.state]) return;
     const lula = Number(row.lula) || 0;
@@ -397,14 +398,11 @@ async function loadVotes() {
     votes.lula += lula;
     votes.flavio += flavio;
   });
-  if (abroad.data) {
-    abroad.data.forEach((row) => {
-      const lula = Number(row.lula) || 0;
-      const flavio = Number(row.flavio) || 0;
-      votes.byCountry[row.country] = { lula: lula, flavio: flavio };
-      votes.lula += lula;
-      votes.flavio += flavio;
-    });
+  if (abroad.data && abroad.data[0]) {
+    votes.abroad.lula = Number(abroad.data[0].lula) || 0;
+    votes.abroad.flavio = Number(abroad.data[0].flavio) || 0;
+    votes.lula += votes.abroad.lula;
+    votes.flavio += votes.abroad.flavio;
   }
   saveLocalVotes();
   updateDisplay();
@@ -416,7 +414,7 @@ function subscribeLive() {
   channel = db.channel('urna-live');
   channel.on('broadcast', { event: 'vote' }, ({ payload }) => {
     if (!payload) return;
-    if (payload.country) applyAbroad(payload.candidate, payload.country, true);
+    if (payload.abroad || payload.country) applyAbroad(payload.candidate, true);
     else applyVote(payload.candidate, payload.state, true);
   });
   return new Promise((resolve) => {

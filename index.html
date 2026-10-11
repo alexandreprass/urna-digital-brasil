@@ -86,10 +86,46 @@
       line-height: 1;
       font-variant-numeric: tabular-nums;
     }
-    .lula { border-bottom: 3px solid var(--red); }
     .lula strong { color: #ff5d57; }
-    .flavio { flex-direction: row-reverse; text-align: right; border-bottom: 3px solid var(--green); }
+    .flavio { flex-direction: row-reverse; text-align: right; }
     .flavio strong { color: #3dce73; }
+    .score.lula,
+    .score.flavio {
+      position: relative;
+      width: 50%;
+      border: none;
+      background: #1c1b19;
+    }
+    .score.lula { justify-self: end; border-radius: 18px 0 0 18px; }
+    .score.flavio { justify-self: start; border-radius: 0 18px 18px 0; }
+    .score.lula::before,
+    .score.flavio::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+    }
+    .score.flavio::before {
+      background: linear-gradient(270deg, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0));
+    }
+    .score.lula::after,
+    .score.flavio::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      pointer-events: none;
+    }
+    .score.lula::after { background: linear-gradient(90deg, var(--red), transparent); }
+    .score.flavio::after { background: linear-gradient(270deg, var(--green), transparent); }
     .center-score {
       display: flex;
       align-items: center;
@@ -150,8 +186,10 @@
     #globe-container { width: 56px; height: 56px; display: grid; place-items: center; }
     #globe-container svg { width: 79px; height: auto; }
     #globe-container path { fill: #efe6d4; stroke: #1a5fa8; stroke-width: 0.6; }
-    #globe-container path.red { fill: var(--red); }
-    #globe-container path.green { fill: var(--green); }
+    .globe-face.red { background: var(--red); }
+    .globe-face.green { background: var(--green); }
+    .globe-face.red #globe-container,
+    .globe-face.green #globe-container { visibility: hidden; }
     .globe-label { margin: 3px 0 0; text-align: center; color: #b7b1a8; font-size: 10px; }
     #map-container svg { width: 100%; height: auto; display: block; }
     #map-container .state {
@@ -324,6 +362,7 @@
       #globe, .globe-face, #globe-container { width: 43px; }
       .globe-face, #globe-container { height: 43px; }
       #globe-container svg { width: 62px; }
+      .score.lula, .score.flavio { width: 100%; }
       .score strong { font-size: 32px; }
       .urna { transform: none; }
       .urna-face { grid-template-columns: 1fr; }
@@ -381,7 +420,7 @@
         <div id="map-container"></div>
       </div>
       <p class="legend"><span class="dot red"></span>Lula na frente <span class="dot green"></span>Flávio na frente</p>
-      <p id="map-tip">Passe o mouse no estado ou no país para ver os votos.</p>
+      <p id="map-tip">Passe o mouse no estado ou no exterior para ver os votos.</p>
     </section>
 
     <div class="urna-scene">
@@ -443,6 +482,6 @@
   </main>
 
   <footer>Simulador independente. Não é votação oficial e não tem ligação com o TSE.</footer>
-  <script src="script.js?v=6"></script>
+  <script src="script.js?v=7"></script>
 </body>
 </html>
