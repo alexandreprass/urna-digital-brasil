@@ -2,99 +2,308 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Urna Digital Brasil - Vote Agora</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    (function () {
+      var path = location.pathname;
+      if (!path.endsWith('/')) {
+        if (/\.[a-z0-9]+$/i.test(path)) path = path.replace(/[^/]+$/, '');
+        else path += '/';
+      }
+      var base = document.createElement('base');
+      base.href = location.origin + path;
+      document.head.appendChild(base);
+    })();
+  </script>
+  <title>Urna Digital Brasil</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; font-family: 'Inter', system-ui, sans-serif; }
-    .urna { background: linear-gradient(145deg, #1e293b, #334155); border: 4px solid #475569; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05); }
-    .btn-urna { transition: all 0.15s; }
-    .btn-urna:active { transform: scale(0.95); }
-    .state { transition: fill 0.3s, filter 0.3s; cursor: pointer; }
-    .state:hover { filter: brightness(1.2); }
-    .red { fill: #ef4444 !important; }
-    .green { fill: #22c55e !important; }
-    .neutral { fill: #475569; }
-    .vote-particle { position: absolute; pointer-events: none; font-size: 24px; z-index: 100; animation: fly 1.5s ease-out forwards; }
-    @keyframes fly {
-      0% { opacity: 1; transform: translate(0,0) scale(1); }
-      100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.5); }
+    :root {
+      --bg: #12110f;
+      --red: #d71920;
+      --green: #128a3e;
+      --screen: #d5e6ea;
     }
-    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: #f6f3ee;
+      background:
+        radial-gradient(900px 420px at 70% 0%, rgba(215, 25, 32, 0.16), transparent 60%),
+        radial-gradient(800px 420px at 10% 0%, rgba(18, 138, 62, 0.14), transparent 55%),
+        var(--bg);
+    }
+    .top {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      padding: 16px 20px 12px;
+      background: rgba(18, 17, 15, 0.92);
+      backdrop-filter: blur(10px);
+    }
+    .brand {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      max-width: 1180px;
+      margin: 0 auto 12px;
+    }
+    h1 { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: 0.02em; }
+    #online { margin: 0; color: #b7b1a8; font-size: 13px; }
+    .scoreboard {
+      max-width: 1180px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 140px 1fr;
+      gap: 12px;
+    }
+    .score {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 88px;
+      padding: 10px 14px;
+      background: #1c1b19;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 18px;
+    }
+    .score.pop { transform: scale(1.04); }
+    .score img {
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      object-fit: cover;
+      object-position: center 20%;
+      background: #2a2926;
+    }
+    .score span { display: block; color: #b7b1a8; font-size: 13px; }
+    .score strong {
+      display: block;
+      font-size: 40px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .lula { border-bottom: 3px solid var(--red); }
+    .lula strong { color: #ff5d57; }
+    .flavio { flex-direction: row-reverse; text-align: right; border-bottom: 3px solid var(--green); }
+    .flavio strong { color: #3dce73; }
+    .total { justify-content: center; text-align: center; }
+    .total strong { font-size: 36px; }
+    .stage {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 20px 36px;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(320px, 540px);
+      gap: 28px;
+      align-items: center;
+    }
+    .map-panel { min-width: 0; }
+    #map-container svg { width: 100%; height: auto; display: block; }
+    #map-container .state {
+      fill: #3c424c;
+      stroke: #12110f;
+      stroke-width: 1.3;
+      cursor: default;
+      transition: fill 0.35s ease;
+    }
+    #map-container .state.red { fill: var(--red); }
+    #map-container .state.green { fill: var(--green); }
+    #map-container .state:hover { filter: brightness(1.15); }
+    .legend, #map-tip { margin: 8px 0 0; color: #b7b1a8; font-size: 13px; text-align: center; }
+    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 10px; }
+    .dot.red { background: var(--red); margin-left: 0; }
+    .dot.green { background: var(--green); }
+    .urna {
+      background: linear-gradient(180deg, #f4f4f2 0%, #d9d9d4 100%);
+      color: #1a1a1a;
+      border-radius: 28px;
+      padding: 16px;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 #fff;
+    }
+    .urna-face { display: grid; grid-template-columns: 1.25fr 0.9fr; gap: 12px; }
+    .screen {
+      position: relative;
+      background: var(--screen);
+      border-radius: 8px;
+      min-height: 250px;
+      padding: 14px 14px 12px;
+      box-shadow: inset 0 0 0 2px #9eb4b8;
+      overflow: hidden;
+    }
+    .kicker { font-size: 12px; letter-spacing: 0.04em; }
+    .office { font-size: 22px; font-weight: 800; margin-top: 2px; }
+    .screen-body { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; }
+    .num-label { font-size: 12px; letter-spacing: 0.08em; }
+    .digits { display: flex; gap: 6px; margin: 4px 0 10px; }
+    .digits span {
+      width: 36px;
+      height: 42px;
+      border: 2px solid #1a1a1a;
+      display: grid;
+      place-items: center;
+      font-size: 28px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.35);
+    }
+    #cand-name { font-size: 18px; font-weight: 800; min-height: 22px; }
+    #cand-party { font-size: 14px; min-height: 18px; }
+    .photo-box {
+      width: 108px;
+      height: 128px;
+      border: 2px solid #8aa0a4;
+      background: #c5d5d8;
+      display: grid;
+      place-items: center;
+      flex: none;
+    }
+    .photo-box img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; }
+    .silhouette { width: 54px; height: 54px; border-radius: 50%; background: #8aa0a4; }
+    #screen-help { margin: 14px 0 0; font-size: 12px; line-height: 1.35; min-height: 32px; }
+    .fim-banner {
+      display: none;
+      position: absolute;
+      inset: 0;
+      place-items: center;
+      background: var(--screen);
+      font-size: 72px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+    .screen.fim .fim-banner { display: grid; }
+    .pad { background: #1b1b1b; border-radius: 10px; padding: 10px; color: #fff; }
+    .pad-brand { text-align: right; font-size: 11px; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 8px; }
+    .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .keys button {
+      border: 0;
+      border-radius: 4px;
+      min-height: 42px;
+      font: inherit;
+      font-weight: 800;
+      font-size: 18px;
+      background: #f4f4f4;
+      color: #111;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    .keys button:active { transform: translateY(1px); }
+    .keys .branco { font-size: 11px; }
+    .keys .corrige { background: #e0701a; color: #fff; font-size: 11px; }
+    .keys .confirma { background: #1e8f3a; color: #fff; font-size: 11px; }
+    .spacer { visibility: hidden; }
+    footer { text-align: center; color: #8d877e; font-size: 12px; padding: 0 16px 28px; }
+    .fly {
+      position: fixed;
+      z-index: 40;
+      width: 38px;
+      height: 38px;
+      margin: -19px 0 0 -19px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-size: 13px;
+      font-weight: 800;
+      pointer-events: none;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+      transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.9s ease;
+    }
+    .fly.lula { background: var(--red); }
+    .fly.flavio { background: var(--green); }
+    @media (max-width: 860px) {
+      .scoreboard { grid-template-columns: 1fr 1fr; }
+      .total { grid-column: 1 / -1; order: -1; }
+      .stage { grid-template-columns: 1fr; }
+      .score strong { font-size: 32px; }
+      .urna-face { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
-  <header class="text-center mb-8">
-    <h1 class="text-4xl md:text-6xl font-bold bg-gradient-to-r from-red-500 via-white to-green-500 bg-clip-text text-transparent">Urna Digital Brasil</h1>
-    <p class="text-slate-400 mt-2">Simulador moderno • Vote e veja o Brasil em tempo real</p>
-    <div class="mt-4 flex justify-center gap-8 text-2xl font-mono">
-      <div class="glass px-6 py-3 rounded-2xl">
-        <span class="text-red-400">Lula 13</span><br><span id="lula-count" class="text-3xl">0</span>
-      </div>
-      <div class="glass px-6 py-3 rounded-2xl text-center">
-        <span class="text-slate-300">Total</span><br><span id="total-count" class="text-4xl font-bold">0</span>
-      </div>
-      <div class="glass px-6 py-3 rounded-2xl">
-        <span class="text-green-400">Flávio 22</span><br><span id="flavio-count" class="text-3xl">0</span>
-      </div>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Urna Digital Brasil</h1>
+      <p id="online">Detectando seu estado...</p>
     </div>
-    <p id="online" class="mt-2 text-sm text-slate-500">Detectando localização...</p>
+    <div class="scoreboard">
+      <article class="score lula" id="lula-score">
+        <img src="lula.webp" alt="Lula">
+        <div>
+          <span>Lula · 13</span>
+          <strong id="lula-count">0</strong>
+        </div>
+      </article>
+      <article class="score total">
+        <div>
+          <span>Total</span>
+          <strong id="total-count">0</strong>
+        </div>
+      </article>
+      <article class="score flavio" id="flavio-score">
+        <img src="flavio.webp" alt="Flávio Bolsonaro">
+        <div>
+          <span>Flávio · 22</span>
+          <strong id="flavio-count">0</strong>
+        </div>
+      </article>
+    </div>
   </header>
 
-  <div class="flex flex-col lg:flex-row gap-8 items-center justify-center max-w-7xl mx-auto">
-    <!-- Mapa -->
-    <div class="glass rounded-3xl p-4 w-full lg:w-1/2">
-      <h2 class="text-xl font-semibold mb-4 text-center">Mapa do Brasil por Estado</h2>
-      <div id="map-container" class="relative w-full" style="min-height: 400px;">
-        <!-- SVG será inserido aqui -->
+  <main class="stage">
+    <section class="map-panel">
+      <div id="map-container"></div>
+      <p class="legend"><span class="dot red"></span>Lula na frente <span class="dot green"></span>Flávio na frente</p>
+      <p id="map-tip">Passe o mouse no estado para ver os votos.</p>
+    </section>
+
+    <section class="urna" aria-label="Urna eletrônica">
+      <div class="urna-face">
+        <div class="screen" id="screen">
+          <div class="kicker">SEU VOTO PARA</div>
+          <div class="office">PRESIDENTE</div>
+          <div class="screen-body">
+            <div>
+              <div class="num-label">NÚMERO</div>
+              <div class="digits"><span id="d1"></span><span id="d2"></span></div>
+              <div id="cand-name"></div>
+              <div id="cand-party"></div>
+            </div>
+            <div class="photo-box">
+              <img id="cand-photo" alt="" hidden>
+              <div class="silhouette" id="silhouette"></div>
+            </div>
+          </div>
+          <p id="screen-help">Digite 13 ou 22 e aperte CONFIRMA.</p>
+          <div class="fim-banner">FIM</div>
+        </div>
+        <div class="pad">
+          <div class="pad-brand">JUSTIÇA<br>ELEITORAL</div>
+          <div class="keys">
+            <button type="button" data-key="1">1</button>
+            <button type="button" data-key="2">2</button>
+            <button type="button" data-key="3">3</button>
+            <button type="button" data-key="4">4</button>
+            <button type="button" data-key="5">5</button>
+            <button type="button" data-key="6">6</button>
+            <button type="button" data-key="7">7</button>
+            <button type="button" data-key="8">8</button>
+            <button type="button" data-key="9">9</button>
+            <button type="button" class="spacer" tabindex="-1"></button>
+            <button type="button" data-key="0">0</button>
+            <button type="button" class="spacer" tabindex="-1"></button>
+            <button type="button" class="branco" data-key="branco">BRANCO</button>
+            <button type="button" class="corrige" data-key="corrige">CORRIGE</button>
+            <button type="button" class="confirma" data-key="confirma">CONFIRMA</button>
+          </div>
+        </div>
       </div>
-      <p class="text-xs text-center text-slate-500 mt-2">Vermelho = Lula lidera | Verde = Flávio lidera</p>
-    </div>
+    </section>
+  </main>
 
-    <!-- Urna + Candidatos -->
-    <div class="flex flex-col items-center gap-6 w-full lg:w-1/2">
-      <div class="flex gap-8 justify-center">
-        <div class="text-center">
-          <img id="lula-photo" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop" alt="Lula" class="w-32 h-32 rounded-full border-4 border-red-500 object-cover shadow-lg">
-          <p class="mt-2 font-bold text-red-400">Lula<br><span class="text-sm">13</span></p>
-        </div>
-        <div class="text-center">
-          <img id="flavio-photo" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop" alt="Flávio" class="w-32 h-32 rounded-full border-4 border-green-500 object-cover shadow-lg">
-          <p class="mt-2 font-bold text-green-400">Flávio<br><span class="text-sm">22</span></p>
-        </div>
-      </div>
-
-      <!-- Urna Eletrônica Estilizada -->
-      <div class="urna rounded-3xl p-6 w-full max-w-md">
-        <div class="bg-black rounded-xl p-4 mb-4 text-right text-2xl font-mono text-green-400 min-h-[60px]" id="display">Digite 13 ou 22</div>
-        <div class="grid grid-cols-3 gap-2">
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl text-xl" onclick="press('1')">1</button>
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl text-xl" onclick="press('2')">2</button>
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl text-xl" onclick="press('3')">3</button>
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl text-xl" onclick="press('4')">4</button>
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl text-xl" onclick="press('5')">5</button>
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl text-xl" onclick="press('6')">6</button>
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl text-xl" onclick="press('7')">7</button>
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl text-xl" onclick="press('8')">8</button>
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl text-xl" onclick="press('9')">9</button>
-          <button class="btn-urna bg-red-600 hover:bg-red-500 text-white py-4 rounded-xl col-span-1" onclick="corrigir()">CORRIGE</button>
-          <button class="btn-urna bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl" onclick="press('0')">0</button>
-          <button class="btn-urna bg-green-600 hover:bg-green-500 text-white py-4 rounded-xl col-span-1 font-bold" onclick="confirmar()">CONFIRMA</button>
-        </div>
-        <div class="mt-4 flex gap-2">
-          <button class="flex-1 bg-red-500 hover:bg-red-600 py-3 rounded-xl font-bold" onclick="votoRapido('lula')">Vote 13 Lula</button>
-          <button class="flex-1 bg-green-500 hover:bg-green-600 py-3 rounded-xl font-bold" onclick="votoRapido('flavio')">Vote 22 Flávio</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer class="text-center mt-12 text-xs text-slate-500">
-    <p>Simulador independente. Não é votação oficial. Sem afiliação ao TSE.</p>
-    <p>Pronto para conectar ao Supabase para votos reais em tempo real. Veja o README.</p>
-  </footer>
-
+  <footer>Simulador independente. Não é votação oficial e não tem ligação com o TSE.</footer>
   <script src="script.js"></script>
 </body>
 </html>
