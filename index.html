@@ -92,15 +92,17 @@
     .total { justify-content: center; text-align: center; }
     .total strong { font-size: 36px; }
     .stage {
-      max-width: 1180px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 18px 20px 36px;
+      padding: 18px 20px 48px;
       display: grid;
-      grid-template-columns: minmax(260px, 1fr) minmax(320px, 540px);
-      gap: 28px;
+      grid-template-columns: minmax(150px, 300px) minmax(420px, 700px);
+      gap: 18px;
       align-items: center;
+      justify-content: center;
     }
     .map-panel { min-width: 0; }
+    #map-container { width: 100%; max-width: 300px; margin: 0 auto; }
     #map-container svg { width: 100%; height: auto; display: block; }
     #map-container .state {
       fill: #3c424c;
@@ -116,83 +118,132 @@
     .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 4px 0 10px; }
     .dot.red { background: var(--red); margin-left: 0; }
     .dot.green { background: var(--green); }
+    .urna-scene { perspective: 1100px; }
     .urna {
-      background: linear-gradient(180deg, #f4f4f2 0%, #d9d9d4 100%);
       color: #1a1a1a;
-      border-radius: 28px;
-      padding: 16px;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 #fff;
+      transform: rotateX(8deg);
+      transform-origin: center bottom;
     }
-    .urna-face { display: grid; grid-template-columns: 1.25fr 0.9fr; gap: 12px; }
+    .urna-shell {
+      position: relative;
+      background: linear-gradient(180deg, #f3f3f3 0%, #d5d5d5 16%, #c8c8c8 55%, #bdbdbd 100%);
+      border-radius: 14px 14px 18px 18px;
+      padding: 16px 16px 18px;
+      box-shadow:
+        inset 0 1px 0 #fff,
+        inset 0 -10px 16px rgba(0, 0, 0, 0.08),
+        0 28px 30px rgba(0, 0, 0, 0.45);
+    }
+    .urna-shell::after {
+      content: "";
+      position: absolute;
+      left: 5%;
+      right: 5%;
+      bottom: -13px;
+      height: 14px;
+      background: linear-gradient(#8a8a8a, #5a5a5a);
+      border-radius: 0 0 12px 12px;
+      z-index: -1;
+    }
+    .urna-face { display: grid; grid-template-columns: 1.5fr 0.82fr; gap: 14px; align-items: end; }
     .screen {
       position: relative;
-      background: var(--screen);
-      border-radius: 8px;
-      min-height: 250px;
-      padding: 14px 14px 12px;
-      box-shadow: inset 0 0 0 2px #9eb4b8;
+      background: linear-gradient(180deg, #eef8f8 0%, #d4ecec 45%, #c5e3e3 100%);
+      border-radius: 3px;
+      min-height: 248px;
+      padding: 12px 12px 10px;
+      border: 7px solid #d3d3d3;
+      box-shadow: inset 0 0 0 2px #8ea4a6, inset 0 8px 16px rgba(255, 255, 255, 0.35);
       overflow: hidden;
     }
-    .kicker { font-size: 12px; letter-spacing: 0.04em; }
-    .office { font-size: 22px; font-weight: 800; margin-top: 2px; }
-    .screen-body { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; }
-    .num-label { font-size: 12px; letter-spacing: 0.08em; }
-    .digits { display: flex; gap: 6px; margin: 4px 0 10px; }
+    .screen::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 28%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent);
+      pointer-events: none;
+    }
+    .kicker { font-size: 12px; letter-spacing: 0.06em; font-weight: 700; }
+    .office { font-size: 26px; font-weight: 800; margin-top: 1px; letter-spacing: 0.01em; }
+    .screen-body { display: flex; justify-content: space-between; gap: 8px; margin-top: 14px; }
+    .num-label { font-size: 12px; letter-spacing: 0.12em; font-weight: 700; }
+    .digits { display: flex; gap: 8px; margin: 4px 0 12px; }
     .digits span {
-      width: 36px;
-      height: 42px;
-      border: 2px solid #1a1a1a;
+      width: 42px;
+      height: 48px;
+      border: 2px solid #1d1d1d;
       display: grid;
       place-items: center;
-      font-size: 28px;
+      font-size: 30px;
       font-weight: 800;
-      background: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.45);
     }
     #cand-name { font-size: 18px; font-weight: 800; min-height: 22px; }
     #cand-party { font-size: 14px; min-height: 18px; }
     .photo-box {
-      width: 108px;
-      height: 128px;
-      border: 2px solid #8aa0a4;
-      background: #c5d5d8;
+      width: 112px;
+      height: 132px;
+      border: 2px solid #7f989b;
+      background: #d5e7e8;
       display: grid;
       place-items: center;
       flex: none;
     }
     .photo-box img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; }
-    .silhouette { width: 54px; height: 54px; border-radius: 50%; background: #8aa0a4; }
-    #screen-help { margin: 14px 0 0; font-size: 12px; line-height: 1.35; min-height: 32px; }
+    .silhouette {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #8aa3a6;
+      box-shadow: 0 28px 0 10px #8aa3a6;
+      margin-top: -18px;
+    }
+    #screen-help { margin: 16px 0 0; font-size: 12px; line-height: 1.35; min-height: 32px; }
     .fim-banner {
       display: none;
       position: absolute;
       inset: 0;
       place-items: center;
-      background: var(--screen);
+      background: #d4ecec;
       font-size: 72px;
       font-weight: 800;
       letter-spacing: 0.08em;
     }
     .screen.fim .fim-banner { display: grid; }
-    .pad { background: #1b1b1b; border-radius: 10px; padding: 10px; color: #fff; }
-    .pad-brand { text-align: right; font-size: 11px; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 8px; }
+    .side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .seal { display: flex; align-items: center; justify-content: flex-end; gap: 8px; color: #2a2a2a; }
+    .arms { width: 46px; height: 46px; flex: none; }
+    .seal-text { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; line-height: 1.05; }
+    .pad { background: #141518; border-radius: 4px; padding: 10px 10px 8px; box-shadow: inset 0 0 0 1px #000; }
     .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
     .keys button {
       border: 0;
-      border-radius: 4px;
-      min-height: 42px;
+      border-radius: 3px;
+      min-height: 38px;
       font: inherit;
       font-weight: 800;
       font-size: 18px;
-      background: #f4f4f4;
-      color: #111;
-      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+      background: linear-gradient(180deg, #f7f7f7 0%, #d9d9d9 100%);
+      color: #161616;
+      box-shadow: 0 2px 0 #050505, inset 0 1px 0 #fff;
       cursor: pointer;
       touch-action: manipulation;
     }
-    .keys button:active { transform: translateY(1px); }
-    .keys .branco { font-size: 11px; }
-    .keys .corrige { background: #e0701a; color: #fff; font-size: 11px; }
-    .keys .confirma { background: #1e8f3a; color: #fff; font-size: 11px; }
+    .keys button:active { transform: translateY(1px); box-shadow: 0 1px 0 #050505, inset 0 1px 0 #fff; }
+    .keys .branco { font-size: 10px; letter-spacing: 0.02em; }
+    .keys .corrige {
+      background: linear-gradient(180deg, #ff8d1f 0%, #e25d00 100%);
+      color: #fff;
+      font-size: 10px;
+    }
+    .keys .confirma {
+      background: linear-gradient(180deg, #22c255 0%, #078a38 100%);
+      color: #fff;
+      font-size: 10px;
+    }
     .spacer { visibility: hidden; }
     footer { text-align: center; color: #8d877e; font-size: 12px; padding: 0 16px 28px; }
     .fly {
@@ -217,8 +268,11 @@
       .scoreboard { grid-template-columns: 1fr 1fr; }
       .total { grid-column: 1 / -1; order: -1; }
       .stage { grid-template-columns: 1fr; }
+      #map-container { width: 46%; max-width: 210px; }
       .score strong { font-size: 32px; }
+      .urna { transform: none; }
       .urna-face { grid-template-columns: 1fr; }
+      .seal { justify-content: flex-start; }
     }
   </style>
 </head>
@@ -259,7 +313,9 @@
       <p id="map-tip">Passe o mouse no estado para ver os votos.</p>
     </section>
 
+    <div class="urna-scene">
     <section class="urna" aria-label="Urna eletrônica">
+      <div class="urna-shell">
       <div class="urna-face">
         <div class="screen" id="screen">
           <div class="kicker">SEU VOTO PARA</div>
@@ -279,8 +335,17 @@
           <p id="screen-help">Digite 13 ou 22 e aperte CONFIRMA.</p>
           <div class="fim-banner">FIM</div>
         </div>
-        <div class="pad">
-          <div class="pad-brand">JUSTIÇA<br>ELEITORAL</div>
+        <div class="side">
+          <div class="seal">
+            <svg class="arms" viewBox="0 0 64 64" aria-hidden="true">
+              <circle cx="32" cy="32" r="30" fill="#f4f4f4" stroke="#2b2b2b" stroke-width="2"></circle>
+              <circle cx="32" cy="32" r="24" fill="none" stroke="#2b2b2b" stroke-width="1.4"></circle>
+              <path fill="#2b2b2b" d="M32 12.5l4.1 12.2h12.8l-10.4 7.6 4 12.2L32 37.2l-10.5 7.3 4-12.2-10.4-7.6h12.8z"></path>
+              <path fill="none" stroke="#2b2b2b" stroke-width="2" d="M14 46c5.2 7 12 10 18 10s12.8-3 18-10"></path>
+            </svg>
+            <div class="seal-text">JUSTIÇA<br>ELEITORAL</div>
+          </div>
+          <div class="pad">
           <div class="keys">
             <button type="button" data-key="1">1</button>
             <button type="button" data-key="2">2</button>
@@ -299,8 +364,11 @@
             <button type="button" class="confirma" data-key="confirma">CONFIRMA</button>
           </div>
         </div>
+        </div>
+      </div>
       </div>
     </section>
+    </div>
   </main>
 
   <footer>Simulador independente. Não é votação oficial e não tem ligação com o TSE.</footer>
