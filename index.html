@@ -369,9 +369,20 @@
       #globe-container svg { width: 46px; }
       .score.lula, .score.flavio { width: 100%; }
       .score strong { font-size: 32px; }
-      .urna { transform: none; }
-      .urna-face { grid-template-columns: 1fr; }
-      .seal { justify-content: flex-start; }
+      .stage { container-type: inline-size; }
+      .urna-scene {
+        width: 100%;
+        position: relative;
+        height: calc(348 * 100cqi / 620);
+      }
+      .urna {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 620px;
+        transform-origin: center top;
+        transform: translateX(-50%) scale(calc(100cqi / 620px)) rotateX(8deg);
+      }
     }
   </style>
 </head>
