@@ -172,24 +172,28 @@
     .map-panel { min-width: 0; }
     .atlas { display: flex; align-items: center; justify-content: center; gap: 8px; }
     #map-container { width: 100%; max-width: 250px; margin: 0 auto; }
-    #globe { width: 56px; flex: none; }
+    #globe { width: 42px; flex: none; align-self: flex-end; margin-bottom: 28px; }
     .globe-face {
-      width: 56px;
-      height: 56px;
+      width: 42px;
+      height: 42px;
       border-radius: 50%;
       overflow: hidden;
       display: grid;
       place-items: center;
       background: radial-gradient(circle at 32% 28%, #6eb6ea, #1a5fa8 72%);
-      box-shadow: inset -6px -4px 8px rgba(0, 0, 0, 0.28), 0 0 0 2px #d5dbe0;
+      box-shadow: inset -5px -3px 6px rgba(0, 0, 0, 0.28), 0 0 0 2px #d5dbe0;
     }
-    #globe-container { width: 56px; height: 56px; display: grid; place-items: center; }
-    #globe-container svg { width: 79px; height: auto; }
+    #globe-container { width: 42px; height: 42px; display: grid; place-items: center; }
+    #globe-container svg { width: 59px; height: auto; }
     #globe-container path { fill: #efe6d4; stroke: #1a5fa8; stroke-width: 0.6; }
-    .globe-face.red { background: var(--red); }
-    .globe-face.green { background: var(--green); }
-    .globe-face.red #globe-container,
-    .globe-face.green #globe-container { visibility: hidden; }
+    .globe-face.red {
+      background: radial-gradient(circle at 32% 28%, #ff6b66, #8e1218 74%);
+    }
+    .globe-face.green {
+      background: radial-gradient(circle at 32% 28%, #3dce73, #0b5a2c 74%);
+    }
+    .globe-face.red #globe-container path { fill: #ffd2cf; stroke: #6d1015; }
+    .globe-face.green #globe-container path { fill: #d9ffe8; stroke: #084824; }
     .globe-label { margin: 3px 0 0; text-align: center; color: #b7b1a8; font-size: 10px; }
     #map-container svg { width: 100%; height: auto; display: block; }
     #map-container .state {
@@ -359,9 +363,10 @@
       .stage { grid-template-columns: 1fr; }
       .atlas { gap: 6px; }
       #map-container { width: auto; max-width: 190px; }
-      #globe, .globe-face, #globe-container { width: 43px; }
-      .globe-face, #globe-container { height: 43px; }
-      #globe-container svg { width: 62px; }
+      #globe { margin-bottom: 8px; }
+      #globe, .globe-face, #globe-container { width: 32px; }
+      .globe-face, #globe-container { height: 32px; }
+      #globe-container svg { width: 46px; }
       .score.lula, .score.flavio { width: 100%; }
       .score strong { font-size: 32px; }
       .urna { transform: none; }
@@ -482,6 +487,6 @@
   </main>
 
   <footer>Simulador independente. Não é votação oficial e não tem ligação com o TSE.</footer>
-  <script src="script.js?v=7"></script>
+  <script src="script.js?v=8"></script>
 </body>
 </html>
