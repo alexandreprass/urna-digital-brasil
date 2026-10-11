@@ -1,6 +1,6 @@
-// Configuração Supabase - SUBSTITUA com seus dados (veja README)
-const SUPABASE_URL = 'https://seu-projeto.supabase.co';
-const SUPABASE_ANON_KEY = 'sua-anon-key-aqui';
+// Configuração Supabase
+const SUPABASE_URL = 'https://wrbzltzglyfnfjvxiuqb.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_KcFm3ZHBGG9s0KvEh2xYqg_Cg_J2Z4G';
 
 let supabase = null;
 let currentInput = '';
@@ -15,17 +15,13 @@ async function init() {
   // Detectar localização
   await detectLocation();
   
-  // Tentar conectar Supabase
-  if (SUPABASE_URL !== 'https://seu-projeto.supabase.co') {
-    try {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      await loadVotes();
-      subscribeRealtime();
-    } catch (e) {
-      console.warn('Supabase não configurado, usando modo local:', e);
-      loadLocalVotes();
-    }
-  } else {
+  // Conectar Supabase
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    await loadVotes();
+    subscribeRealtime();
+  } catch (e) {
+    console.warn('Erro ao conectar Supabase, usando modo local:', e);
     loadLocalVotes();
   }
   
@@ -35,11 +31,8 @@ async function init() {
 
 async function loadMap() {
   const container = document.getElementById('map-container');
-  // SVG inline simplificado ou carregar - para produção use o arquivo completo
-  // Aqui usamos um placeholder responsivo; o SVG real está em brazil-map.svg
   container.innerHTML = `<object data="brazil-map.svg" type="image/svg+xml" id="brazil-svg" class="w-full h-auto" style="max-height:500px"></object>`;
   
-  // Após carregar, estilizar estados
   setTimeout(() => {
     const svg = document.getElementById('brazil-svg');
     if (svg && svg.contentDocument) {
@@ -94,7 +87,6 @@ function votoRapido(cand) {
 }
 
 async function vote(candidate) {
-  // Limite local simples
   const lastVote = localStorage.getItem('lastVote');
   if (lastVote && Date.now() - parseInt(lastVote) < 2000) {
     alert('Aguarde 2 segundos entre votos.');
@@ -102,20 +94,16 @@ async function vote(candidate) {
   }
   localStorage.setItem('lastVote', Date.now().toString());
 
-  // Animação de voto voando
   animateVote(candidate, userState);
 
   if (supabase) {
-    // Inserir no Supabase
     const { error } = await supabase.from('votes').insert({
       candidate: candidate,
       state: userState,
       created_at: new Date().toISOString()
     });
     if (error) console.error(error);
-    // O realtime vai atualizar
   } else {
-    // Modo local
     votes[candidate]++;
     if (!votes.byState[userState]) votes.byState[userState] = { lula: 0, flavio: 0 };
     votes.byState[userState][candidate]++;
@@ -131,7 +119,6 @@ function animateVote(candidate, state) {
   particle.textContent = '🗳️';
   particle.style.left = '50%';
   particle.style.top = '40%';
-  // Calcular destino aproximado para a foto
   const target = candidate === 'lula' ? document.getElementById('lula-photo') : document.getElementById('flavio-photo');
   const rect = target.getBoundingClientRect();
   const startRect = particle.getBoundingClientRect();
@@ -150,7 +137,6 @@ function updateDisplay() {
 }
 
 function updateMap() {
-  // Atualizar cores dos estados baseado em quem lidera
   const svg = document.getElementById('brazil-svg');
   if (!svg || !svg.contentDocument) return;
   Object.keys(votes.byState || {}).forEach(uf => {
@@ -165,7 +151,6 @@ function updateMap() {
   });
 }
 
-// Local storage fallback
 function loadLocalVotes() {
   const saved = localStorage.getItem('urnaVotes');
   if (saved) votes = JSON.parse(saved);
@@ -176,7 +161,6 @@ function saveLocalVotes() {
   localStorage.setItem('urnaVotes', JSON.stringify(votes));
 }
 
-// Supabase realtime
 async function loadVotes() {
   const { data, error } = await supabase.from('votes').select('candidate, state');
   if (error) return;
@@ -199,11 +183,9 @@ function subscribeRealtime() {
       votes.byState[v.state][v.candidate]++;
       updateDisplay();
       updateMap();
-      // Animação para outros usuários também
       animateVote(v.candidate, v.state);
     })
     .subscribe();
 }
 
-// Iniciar
 document.addEventListener('DOMContentLoaded', init);
