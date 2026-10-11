@@ -20,8 +20,9 @@ let channel = null;
 let currentInput = '';
 let branco = false;
 let locked = false;
-let userState = 'SP';
-let votes = { lula: 0, flavio: 0, byState: {} };
+let origin = { kind: 'state', code: 'SP', name: 'São Paulo' };
+let votes = { lula: 0, flavio: 0, byState: {}, byCountry: {} };
+let shownPct = null;
 let audioCtx = null;
 
 function beep(freq, dur) {
@@ -42,7 +43,7 @@ function beep(freq, dur) {
 async function init() {
   await loadMap();
   await detectLocation();
-  document.getElementById('online').textContent = 'Seu voto entra em ' + (UF[userState] || userState);
+  document.getElementById('online').textContent = 'Seu voto entra em ' + placeName();
   try {
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const loaded = await loadVotes();
@@ -56,31 +57,62 @@ async function init() {
   updateMap();
 }
 
+function svgMarkup(text) {
+  return text.replace(/^\uFEFF/, '').replace(/<\?xml[\s\S]*?\?>/, '');
+}
+
 async function loadMap() {
-  const res = await fetch('brazil-map.svg');
-  const text = await res.text();
+  const [brazil, world] = await Promise.all([
+    fetch('brazil-map.svg').then((res) => res.text()),
+    fetch('world-map.svg').then((res) => res.text())
+  ]);
   const container = document.getElementById('map-container');
-  container.innerHTML = text.replace(/^\uFEFF/, '');
+  container.innerHTML = svgMarkup(brazil);
   container.querySelectorAll('.state').forEach((el) => {
     el.addEventListener('pointerenter', () => showTip(el));
     el.addEventListener('pointerleave', () => {
-      document.getElementById('map-tip').textContent = 'Passe o mouse no estado para ver os votos.';
+      document.getElementById('map-tip').textContent = 'Passe o mouse no estado ou no país para ver os votos.';
+    });
+  });
+  const globe = document.getElementById('globe-container');
+  globe.innerHTML = svgMarkup(world);
+  globe.querySelectorAll('path').forEach((el) => {
+    el.addEventListener('pointerenter', () => showCountryTip(el));
+    el.addEventListener('pointerleave', () => {
+      document.getElementById('map-tip').textContent = 'Passe o mouse no estado ou no país para ver os votos.';
     });
   });
 }
 
 function showTip(el) {
   const uf = el.id.toUpperCase();
-  const st = votes.byState[uf] || { lula: 0, flavio: 0 };
+  const st = (votes.byState && votes.byState[uf]) || { lula: 0, flavio: 0 };
   const nome = el.getAttribute('aria-label') || UF[uf] || uf;
   document.getElementById('map-tip').textContent = nome + ' · Lula ' + st.lula + ' · Flávio ' + st.flavio;
+}
+
+function showCountryTip(el) {
+  const code = (el.id || '').toUpperCase();
+  const st = (votes.byCountry && votes.byCountry[code]) || { lula: 0, flavio: 0 };
+  const nome = el.getAttribute('data-name') || code;
+  document.getElementById('map-tip').textContent = nome + ' · Lula ' + st.lula + ' · Flávio ' + st.flavio;
+}
+
+function placeName() {
+  if (origin.kind === 'country') return origin.name || origin.code;
+  return UF[origin.code] || origin.code;
 }
 
 async function detectLocation() {
   try {
     const res = await fetch('https://ipwho.is/');
     const data = await res.json();
-    if (data && data.country_code === 'BR' && UF[data.region_code]) userState = data.region_code;
+    const country = data && data.country_code ? String(data.country_code).toUpperCase() : '';
+    if (country === 'BR' && UF[data.region_code]) {
+      origin = { kind: 'state', code: data.region_code, name: UF[data.region_code] };
+    } else if (/^[A-Z]{2}$/.test(country) && country !== 'BR') {
+      origin = { kind: 'country', code: country, name: data.country || country };
+    }
   } catch (error) {}
 }
 
@@ -182,14 +214,26 @@ function vote(candidate) {
     return false;
   }
   localStorage.setItem('lastVote', String(Date.now()));
-  applyVote(candidate, userState, true);
-  if (channel) {
-    channel.send({ type: 'broadcast', event: 'vote', payload: { candidate: candidate, state: userState } });
-  }
-  if (db) {
-    db.rpc('cast_vote', { p_candidate: candidate, p_state: userState }).then(({ error }) => {
-      if (error) console.warn(error.message || error);
-    });
+  if (origin.kind === 'country') {
+    applyAbroad(candidate, origin.code, true);
+    if (channel) {
+      channel.send({ type: 'broadcast', event: 'vote', payload: { candidate: candidate, country: origin.code } });
+    }
+    if (db) {
+      db.rpc('cast_abroad_vote', { p_candidate: candidate, p_country: origin.code }).then(({ error }) => {
+        if (error) console.warn(error.message || error);
+      });
+    }
+  } else {
+    applyVote(candidate, origin.code, true);
+    if (channel) {
+      channel.send({ type: 'broadcast', event: 'vote', payload: { candidate: candidate, state: origin.code } });
+    }
+    if (db) {
+      db.rpc('cast_vote', { p_candidate: candidate, p_state: origin.code }).then(({ error }) => {
+        if (error) console.warn(error.message || error);
+      });
+    }
   }
   return true;
 }
@@ -197,17 +241,30 @@ function vote(candidate) {
 function applyVote(candidate, uf, animate) {
   if (!CANDIDATES[candidate] || !UF[uf]) return;
   votes[candidate] += 1;
+  if (!votes.byState) votes.byState = {};
   if (!votes.byState[uf]) votes.byState[uf] = { lula: 0, flavio: 0 };
   votes.byState[uf][candidate] += 1;
   saveLocalVotes();
   updateDisplay();
   updateMap();
-  if (animate) flyVote(candidate, uf);
+  if (animate) flyVote(candidate, uf, false);
 }
 
-function flyVote(candidate, uf) {
-  const svg = document.querySelector('#map-container svg');
-  const state = svg && svg.querySelector('#' + uf.toLowerCase());
+function applyAbroad(candidate, country, animate) {
+  if (!CANDIDATES[candidate] || !/^[A-Z]{2}$/.test(country) || country === 'BR') return;
+  votes[candidate] += 1;
+  if (!votes.byCountry) votes.byCountry = {};
+  if (!votes.byCountry[country]) votes.byCountry[country] = { lula: 0, flavio: 0 };
+  votes.byCountry[country][candidate] += 1;
+  saveLocalVotes();
+  updateDisplay();
+  updateMap();
+  if (animate) flyVote(candidate, country, true);
+}
+
+function flyVote(candidate, code, abroad) {
+  const svg = document.querySelector(abroad ? '#globe-container svg' : '#map-container svg');
+  const state = svg && svg.querySelector('#' + (abroad ? code : code.toLowerCase()));
   const target = document.getElementById(candidate === 'lula' ? 'lula-score' : 'flavio-score');
   if (!target) return;
   const end = target.getBoundingClientRect();
@@ -218,7 +275,7 @@ function flyVote(candidate, uf) {
     x = start.left + start.width / 2;
     y = start.top + start.height / 2;
   } else {
-    const map = document.getElementById('map-container').getBoundingClientRect();
+    const map = document.getElementById(abroad ? 'globe' : 'map-container').getBoundingClientRect();
     x = map.left + map.width / 2;
     y = map.top + map.height / 2;
   }
@@ -259,11 +316,31 @@ function updateDisplay() {
   document.getElementById('total-count').textContent = total;
   const lulaPct = total ? (lula / total) * 100 : 0;
   const flavioPct = total ? 100 - lulaPct : 0;
+  paintTrend('lula-trend', lulaPct);
+  paintTrend('flavio-trend', flavioPct);
+  shownPct = { lula: lulaPct, flavio: flavioPct };
   document.getElementById('lula-pct').textContent = formatPct(lula, total);
   document.getElementById('flavio-pct').textContent = formatPct(flavio, total);
   document.getElementById('lula-bar').style.width = lulaPct + '%';
   document.getElementById('flavio-bar').style.width = flavioPct + '%';
   document.getElementById('race-bar').setAttribute('aria-label', 'Lula ' + formatPct(lula, total) + ', Flávio ' + formatPct(flavio, total));
+}
+
+function paintTrend(id, now) {
+  const el = document.getElementById(id);
+  const key = id === 'lula-trend' ? 'lula' : 'flavio';
+  if (!shownPct || Math.abs(now - shownPct[key]) < 0.05) {
+    el.textContent = '';
+    el.className = 'trend';
+    return;
+  }
+  if (now > shownPct[key]) {
+    el.textContent = '▲';
+    el.className = 'trend up';
+  } else {
+    el.textContent = '▼';
+    el.className = 'trend down';
+  }
 }
 
 function updateMap() {
@@ -276,12 +353,28 @@ function updateMap() {
     if (st.lula > st.flavio) el.classList.add('red');
     else if (st.flavio > st.lula) el.classList.add('green');
   });
+  updateWorld();
+}
+
+function updateWorld() {
+  const svg = document.querySelector('#globe-container svg');
+  if (!svg) return;
+  svg.querySelectorAll('path').forEach((el) => {
+    el.classList.remove('red', 'green');
+    const row = votes.byCountry && votes.byCountry[(el.id || '').toUpperCase()];
+    if (!row) return;
+    if (row.lula > row.flavio) el.classList.add('red');
+    else if (row.flavio > row.lula) el.classList.add('green');
+  });
 }
 
 function loadLocalVotes() {
   try {
     const saved = JSON.parse(localStorage.getItem('urnaVotes') || 'null');
-    if (saved && saved.byState) votes = saved;
+    if (saved && saved.byState) {
+      votes = saved;
+      if (!votes.byCountry) votes.byCountry = {};
+    }
   } catch (error) {}
   updateDisplay();
   updateMap();
@@ -294,7 +387,8 @@ function saveLocalVotes() {
 async function loadVotes() {
   const { data, error } = await db.from('state_totals').select('state, lula, flavio');
   if (error || !data) return false;
-  votes = { lula: 0, flavio: 0, byState: {} };
+  const abroad = await db.from('country_totals').select('country, lula, flavio');
+  votes = { lula: 0, flavio: 0, byState: {}, byCountry: {} };
   data.forEach((row) => {
     if (!UF[row.state]) return;
     const lula = Number(row.lula) || 0;
@@ -303,6 +397,15 @@ async function loadVotes() {
     votes.lula += lula;
     votes.flavio += flavio;
   });
+  if (abroad.data) {
+    abroad.data.forEach((row) => {
+      const lula = Number(row.lula) || 0;
+      const flavio = Number(row.flavio) || 0;
+      votes.byCountry[row.country] = { lula: lula, flavio: flavio };
+      votes.lula += lula;
+      votes.flavio += flavio;
+    });
+  }
   saveLocalVotes();
   updateDisplay();
   updateMap();
@@ -313,7 +416,8 @@ function subscribeLive() {
   channel = db.channel('urna-live');
   channel.on('broadcast', { event: 'vote' }, ({ payload }) => {
     if (!payload) return;
-    applyVote(payload.candidate, payload.state, true);
+    if (payload.country) applyAbroad(payload.candidate, payload.country, true);
+    else applyVote(payload.candidate, payload.state, true);
   });
   return new Promise((resolve) => {
     let done = false;

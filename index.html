@@ -89,20 +89,24 @@
     .lula strong { color: #ff5d57; }
     .flavio { flex-direction: row-reverse; text-align: right; border-bottom: 3px solid var(--green); }
     .flavio strong { color: #3dce73; }
-    .total { justify-content: center; text-align: center; }
-    .total strong { font-size: 36px; }
-    .race { max-width: 1180px; margin: 10px auto 0; }
-    .race-pct {
-      display: grid;
-      grid-template-columns: 1fr 140px 1fr;
-      align-items: end;
-      margin-bottom: 6px;
-      font-size: 22px;
+    .count-line { display: flex; align-items: center; gap: 8px; }
+    .flavio .count-line { justify-content: flex-end; }
+    .share {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 18px;
       font-weight: 800;
       font-variant-numeric: tabular-nums;
     }
-    #lula-pct { justify-self: end; color: #ff5d57; padding-right: 10px; }
-    #flavio-pct { grid-column: 3; justify-self: start; color: #3dce73; padding-left: 10px; }
+    .lula .share { color: #ff5d57; }
+    .flavio .share { color: #3dce73; }
+    .trend { width: 14px; font-size: 15px; line-height: 1; }
+    .trend.up { color: #3dce73; }
+    .trend.down { color: #ff5d57; }
+    .total { justify-content: center; text-align: center; }
+    .total strong { font-size: 36px; }
+    .race { max-width: 1180px; margin: 10px auto 0; }
     .race-bar {
       display: flex;
       height: 16px;
@@ -118,13 +122,31 @@
       margin: 0 auto;
       padding: 18px 20px 48px;
       display: grid;
-      grid-template-columns: minmax(150px, 300px) minmax(420px, 700px);
+      grid-template-columns: minmax(180px, 420px) minmax(420px, 680px);
       gap: 18px;
       align-items: center;
       justify-content: center;
     }
     .map-panel { min-width: 0; }
-    #map-container { width: 100%; max-width: 300px; margin: 0 auto; }
+    .atlas { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    #map-container { width: 100%; max-width: 250px; margin: 0 auto; }
+    #globe { width: 112px; flex: none; }
+    .globe-face {
+      width: 112px;
+      height: 112px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 32% 28%, #6eb6ea, #1a5fa8 72%);
+      box-shadow: inset -10px -8px 14px rgba(0, 0, 0, 0.28), 0 0 0 3px #d5dbe0;
+    }
+    #globe-container { width: 112px; height: 112px; display: grid; place-items: center; }
+    #globe-container svg { width: 158px; height: auto; }
+    #globe-container path { fill: #efe6d4; stroke: #1a5fa8; stroke-width: 0.6; }
+    #globe-container path.red { fill: var(--red); }
+    #globe-container path.green { fill: var(--green); }
+    .globe-label { margin: 4px 0 0; text-align: center; color: #b7b1a8; font-size: 12px; }
     #map-container svg { width: 100%; height: auto; display: block; }
     #map-container .state {
       fill: #3c424c;
@@ -289,10 +311,13 @@
     @media (max-width: 860px) {
       .scoreboard { grid-template-columns: 1fr 1fr; }
       .total { grid-column: 1 / -1; order: -1; }
-      .race-pct { grid-template-columns: 1fr 1fr; font-size: 18px; }
-      #flavio-pct { grid-column: 2; }
       .stage { grid-template-columns: 1fr; }
-      #map-container { width: 46%; max-width: 210px; }
+      .atlas { gap: 6px; }
+      #map-container { width: auto; max-width: 190px; }
+      #globe, .globe-face, #globe-container { width: 86px; }
+      .globe-face, #globe-container { height: 86px; }
+      #globe-container svg { width: 124px; }
+      .share { font-size: 15px; }
       .score strong { font-size: 32px; }
       .urna { transform: none; }
       .urna-face { grid-template-columns: 1fr; }
@@ -311,7 +336,10 @@
         <img src="lula.webp" alt="Lula">
         <div>
           <span>Lula · 13</span>
-          <strong id="lula-count">0</strong>
+          <div class="count-line">
+            <strong id="lula-count">0</strong>
+            <span class="share"><span id="lula-pct">0%</span><span id="lula-trend" class="trend"></span></span>
+          </div>
         </div>
       </article>
       <article class="score total">
@@ -324,15 +352,14 @@
         <img src="flavio.webp" alt="Flávio Bolsonaro">
         <div>
           <span>Flávio · 22</span>
-          <strong id="flavio-count">0</strong>
+          <div class="count-line">
+            <strong id="flavio-count">0</strong>
+            <span class="share"><span id="flavio-pct">0%</span><span id="flavio-trend" class="trend"></span></span>
+          </div>
         </div>
       </article>
     </div>
     <div class="race">
-      <div class="race-pct">
-        <span id="lula-pct">0%</span>
-        <span id="flavio-pct">0%</span>
-      </div>
       <div class="race-bar" id="race-bar" role="img" aria-label="Lula 0%, Flávio 0%">
         <div id="lula-bar"></div>
         <div id="flavio-bar"></div>
@@ -342,9 +369,15 @@
 
   <main class="stage">
     <section class="map-panel">
-      <div id="map-container"></div>
+      <div class="atlas">
+        <div id="map-container"></div>
+        <div id="globe">
+          <div class="globe-face"><div id="globe-container"></div></div>
+          <p class="globe-label">Exterior</p>
+        </div>
+      </div>
       <p class="legend"><span class="dot red"></span>Lula na frente <span class="dot green"></span>Flávio na frente</p>
-      <p id="map-tip">Passe o mouse no estado para ver os votos.</p>
+      <p id="map-tip">Passe o mouse no estado ou no país para ver os votos.</p>
     </section>
 
     <div class="urna-scene">
@@ -406,6 +439,6 @@
   </main>
 
   <footer>Simulador independente. Não é votação oficial e não tem ligação com o TSE.</footer>
-  <script src="script.js?v=5"></script>
+  <script src="script.js?v=6"></script>
 </body>
 </html>
