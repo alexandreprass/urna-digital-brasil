@@ -410,6 +410,17 @@ async function loadVotes() {
   return true;
 }
 
+function paintViewers() {
+  const el = document.getElementById('viewer-count');
+  if (!el) return;
+  let total = 0;
+  if (channel) {
+    const state = channel.presenceState();
+    Object.keys(state).forEach((key) => { total += (state[key] && state[key].length) || 0; });
+  }
+  el.textContent = String(total || 1);
+}
+
 function subscribeLive() {
   channel = db.channel('urna-live');
   channel.on('broadcast', { event: 'vote' }, ({ payload }) => {
@@ -417,10 +428,15 @@ function subscribeLive() {
     if (payload.abroad || payload.country) applyAbroad(payload.candidate, true);
     else applyVote(payload.candidate, payload.state, true);
   });
+  channel.on('presence', { event: 'sync' }, paintViewers);
+  channel.on('presence', { event: 'join' }, paintViewers);
+  channel.on('presence', { event: 'leave' }, paintViewers);
+  window.addEventListener('pagehide', () => { if (channel) channel.untrack(); });
   return new Promise((resolve) => {
     let done = false;
     const finish = () => { if (!done) { done = true; resolve(); } };
     channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') channel.track({ at: Date.now() }).then(paintViewers);
       if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') finish();
     });
     setTimeout(finish, 3000);

@@ -45,12 +45,25 @@
     .brand {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
       gap: 12px;
       max-width: 1180px;
       margin: 0 auto 12px;
     }
+    .brand-title { display: flex; align-items: center; gap: 14px; min-width: 0; }
     h1 { font-size: 18px; font-weight: 700; margin: 0; letter-spacing: 0.02em; }
+    .viewers {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      color: #f6f3ee;
+      font-size: 16px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .viewers svg { width: 22px; height: 22px; display: block; }
     #online { margin: 0; color: #b7b1a8; font-size: 13px; }
     .scoreboard {
       max-width: 1180px;
@@ -389,7 +402,16 @@
 <body>
   <header class="top">
     <div class="brand">
-      <h1>Urna Digital Brasil</h1>
+      <div class="brand-title">
+        <h1>Urna Digital Brasil</h1>
+        <p class="viewers" id="viewers" aria-live="polite">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2.2 12S5.8 6.2 12 6.2 21.8 12 21.8 12 18.2 17.8 12 17.8 2.2 12 2.2 12z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="2.7" fill="currentColor"/>
+          </svg>
+          <span id="viewer-count">1</span>
+        </p>
+      </div>
       <p id="online">Detectando seu estado...</p>
     </div>
     <div class="scoreboard">
@@ -498,6 +520,6 @@
   </main>
 
   <footer>Simulador independente. Não é votação oficial e não tem ligação com o TSE.</footer>
-  <script src="script.js?v=8"></script>
+  <script src="script.js?v=9"></script>
 </body>
 </html>
