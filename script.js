@@ -21,6 +21,10 @@ let currentInput = '';
 let branco = false;
 let locked = false;
 let origin = { kind: 'state', code: 'SP', name: 'São Paulo' };
+const STATE_BY_NAME = {};
+Object.keys(UF).forEach((code) => {
+  STATE_BY_NAME[normalizePlace(UF[code])] = code;
+});
 let votes = { lula: 0, flavio: 0, byState: {}, abroad: { lula: 0, flavio: 0 } };
 let shownPct = null;
 let audioCtx = null;
@@ -41,8 +45,9 @@ function beep(freq, dur) {
 }
 
 async function init() {
-  await loadMap();
-  await detectLocation();
+  const located = detectLocation();
+  try { await loadMap(); } catch (error) {}
+  await located;
   document.getElementById('online').textContent = 'Seu voto entra em ' + placeName();
   try {
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -101,17 +106,53 @@ function placeName() {
   return UF[origin.code] || origin.code;
 }
 
+function normalizePlace(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function stateFromGeo(data) {
+  if (!data) return '';
+  const raw = String(data.region_code || data.regionCode || '').toUpperCase().replace(/^BR-/, '');
+  if (UF[raw]) return raw;
+  return STATE_BY_NAME[normalizePlace(data.region)] || '';
+}
+
 async function detectLocation() {
-  try {
-    const res = await fetch('https://ipwho.is/');
-    const data = await res.json();
-    const country = data && data.country_code ? String(data.country_code).toUpperCase() : '';
-    if (country === 'BR' && UF[data.region_code]) {
-      origin = { kind: 'state', code: data.region_code, name: UF[data.region_code] };
-    } else if (/^[A-Z]{2}$/.test(country) && country !== 'BR') {
-      origin = { kind: 'country', code: country, name: 'Exterior' };
+  const sources = [
+    async () => {
+      const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+      if (!res.ok) throw new Error('geojs');
+      return res.json();
+    },
+    async () => {
+      const res = await fetch('https://ipwho.is/');
+      if (!res.ok) throw new Error('ipwho');
+      const data = await res.json();
+      if (data && data.success === false) throw new Error('ipwho');
+      return data;
     }
-  } catch (error) {}
+  ];
+  for (let i = 0; i < sources.length; i += 1) {
+    try {
+      const data = await sources[i]();
+      const country = data && data.country_code ? String(data.country_code).toUpperCase() : '';
+      if (country === 'BR') {
+        const code = stateFromGeo(data);
+        if (code) {
+          origin = { kind: 'state', code: code, name: UF[code] };
+          return;
+        }
+      } else if (/^[A-Z]{2}$/.test(country)) {
+        origin = { kind: 'country', code: country, name: 'Exterior' };
+        return;
+      }
+    } catch (error) {}
+  }
 }
 
 function press(num) {
