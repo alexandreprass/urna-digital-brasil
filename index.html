@@ -405,8 +405,26 @@
     .chat-panel[hidden] { display: none; }
     .chat-log { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
     .chat-line { margin: 0; font-size: 14px; line-height: 1.35; }
-    .chat-line strong { display: block; font-size: 12px; color: #9fd4ff; }
+    .chat-line strong { display: block; font-size: 12px; }
+    .chat-line.red strong { color: #ff5d57; }
+    .chat-line.green strong { color: #3dce73; }
     .chat-form { display: grid; gap: 8px; padding: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+    .chat-name-row { display: flex; align-items: center; gap: 10px; }
+    .chat-colors { display: flex; gap: 8px; flex: none; }
+    .chat-colors button {
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    .chat-colors button.red { background: var(--red); }
+    .chat-colors button.green { background: var(--green); }
+    .chat-colors button[aria-pressed="true"] { box-shadow: 0 0 0 2px #f6f3ee; }
+    .chat-locked { margin: 0; font-size: 14px; font-weight: 800; }
+    .chat-locked.red { color: #ff5d57; }
+    .chat-locked.green { color: #3dce73; }
     .chat-form input {
       width: 100%;
       border: 0;
@@ -417,7 +435,7 @@
       font: inherit;
       font-size: 14px;
     }
-    .chat-form button {
+    .chat-form button[type="submit"] {
       border: 0;
       border-radius: 10px;
       background: #128a3e;
@@ -585,11 +603,18 @@
   <aside class="chat-panel" id="chat-panel" hidden>
     <div class="chat-log" id="chat-log"></div>
     <form class="chat-form" id="chat-form">
-      <input id="chat-name" maxlength="20" placeholder="Seu nome" autocomplete="nickname">
+      <div class="chat-name-row" id="chat-name-row">
+        <input id="chat-name" maxlength="20" placeholder="Seu nome" autocomplete="nickname">
+        <div class="chat-colors">
+          <button type="button" class="red" data-color="red" aria-pressed="true" aria-label="Vermelho"></button>
+          <button type="button" class="green" data-color="green" aria-pressed="false" aria-label="Verde"></button>
+        </div>
+      </div>
+      <p class="chat-locked red" id="chat-locked" hidden></p>
       <input id="chat-text" maxlength="180" placeholder="Mensagem">
       <button type="submit">Enviar</button>
     </form>
   </aside>
-  <script src="script.js?v=10"></script>
+  <script src="script.js?v=11"></script>
 </body>
 </html>
