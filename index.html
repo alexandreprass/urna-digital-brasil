@@ -463,41 +463,36 @@
       border-radius: 16px;
     }
     .chat-setup[hidden], .chat-compose[hidden] { display: none; }
-    .chat-colors { display: flex; gap: 8px; }
-    .chat-emojis { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chat-compose { gap: 6px; }
+    .chat-colors { display: flex; gap: 4px; }
+    .chat-emojis { display: flex; flex-wrap: nowrap; gap: 2px; }
     .chat-emojis button {
-      width: 34px;
-      height: 34px;
+      flex: 1 1 0;
+      width: auto;
+      height: 22px;
+      min-width: 0;
       padding: 0;
       border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 10px;
+      border-radius: 6px;
       background: #12110f;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 12px;
       display: grid;
       place-items: center;
     }
-    .chat-flag { width: 22px; height: 15px; display: block; border-radius: 2px; }
+    .chat-flag { width: 12px; height: 8px; display: block; border-radius: 1px; }
     .chat-line .chat-flag { width: 16px; height: 11px; display: inline-block; vertical-align: -1px; }
-    .chat-emoji-label {
-      margin: 0;
-      color: #8d877e;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
     .chat-colors button {
-      width: 22px;
-      height: 22px;
+      width: 12px;
+      height: 12px;
       padding: 0;
       border-radius: 50%;
-      border: 2px solid transparent;
+      border: 1px solid transparent;
       cursor: pointer;
     }
     .chat-colors button.red { background: var(--red); }
     .chat-colors button.green { background: var(--green); }
-    .chat-colors button[aria-pressed="true"] { box-shadow: 0 0 0 2px #f6f3ee; }
+    .chat-colors button[aria-pressed="true"] { box-shadow: 0 0 0 1px #f6f3ee; }
     .chat-locked { margin: 0; font-size: 13px; font-weight: 800; }
     .chat-locked.red { color: #ff5d57; }
     .chat-locked.green { color: #3dce73; }
@@ -730,7 +725,6 @@
         <button type="button" class="red" data-color="red" aria-pressed="true" aria-label="Vermelho"></button>
         <button type="button" class="green" data-color="green" aria-pressed="false" aria-label="Verde"></button>
       </div>
-      <p class="chat-emoji-label">Emojis</p>
       <div class="chat-emojis">
         <button type="button" data-emoji="😀" aria-label="😀">😀</button>
         <button type="button" data-emoji="😂" aria-label="😂">😂</button>
@@ -745,6 +739,6 @@
       <button type="submit">Enviar</button>
     </form>
   </aside>
-  <script src="script.js?v=19"></script>
+  <script src="script.js?v=20"></script>
 </body>
 </html>
