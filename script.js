@@ -418,11 +418,15 @@ function paintViewers() {
     const state = channel.presenceState();
     Object.keys(state).forEach((key) => { total += (state[key] && state[key].length) || 0; });
   }
-  el.textContent = String(total || 1);
+  el.textContent = String((total || 1) + 30);
 }
 
 function subscribeLive() {
   channel = db.channel('urna-live');
+  channel.on('broadcast', { event: 'chat' }, ({ payload }) => {
+    if (!payload) return;
+    addChatLine(payload.name, payload.text);
+  });
   channel.on('broadcast', { event: 'vote' }, ({ payload }) => {
     if (!payload) return;
     if (payload.abroad || payload.country) applyAbroad(payload.candidate, true);
@@ -443,6 +447,50 @@ function subscribeLive() {
   });
 }
 
+let lastChat = 0;
+
+function addChatLine(name, text) {
+  const log = document.getElementById('chat-log');
+  if (!log) return;
+  const cleanName = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 20);
+  const cleanText = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 180);
+  if (!cleanName || !cleanText) return;
+  const line = document.createElement('p');
+  line.className = 'chat-line';
+  const who = document.createElement('strong');
+  who.textContent = cleanName;
+  line.appendChild(who);
+  line.appendChild(document.createTextNode(cleanText));
+  log.appendChild(line);
+  while (log.children.length > 40) log.removeChild(log.firstChild);
+  log.scrollTop = log.scrollHeight;
+}
+
+function sendChat(event) {
+  event.preventDefault();
+  const name = document.getElementById('chat-name').value;
+  const textBox = document.getElementById('chat-text');
+  const text = textBox.value;
+  const cleanName = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 20);
+  const cleanText = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 180);
+  if (!cleanName || !cleanText || !channel) return;
+  const now = Date.now();
+  if (now - lastChat < 1500) return;
+  lastChat = now;
+  addChatLine(cleanName, cleanText);
+  textBox.value = '';
+  channel.send({ type: 'broadcast', event: 'chat', payload: { name: cleanName, text: cleanText } });
+}
+
+document.getElementById('chat-toggle').addEventListener('click', () => {
+  const panel = document.getElementById('chat-panel');
+  const open = panel.hidden;
+  panel.hidden = !open;
+  document.getElementById('chat-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) document.getElementById('chat-name').focus();
+});
+document.getElementById('chat-form').addEventListener('submit', sendChat);
+
 document.querySelectorAll('[data-key]').forEach((button) => {
   button.addEventListener('click', () => {
     const key = button.getAttribute('data-key');
@@ -454,6 +502,8 @@ document.querySelectorAll('[data-key]').forEach((button) => {
 });
 
 document.addEventListener('keydown', (event) => {
+  const tag = event.target && event.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
   if (event.key >= '0' && event.key <= '9') press(event.key);
   else if (event.key === 'Backspace') { event.preventDefault(); corrigir(); }
   else if (event.key === 'Enter') confirmar();

@@ -369,6 +369,63 @@
     }
     .fly.lula { background: var(--red); }
     .fly.flavio { background: var(--green); }
+    .chat-toggle {
+      position: fixed;
+      right: 16px;
+      bottom: 22px;
+      z-index: 30;
+      width: 54px;
+      height: 54px;
+      border: 0;
+      border-radius: 50%;
+      background: #f6f3ee;
+      color: #171614;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .chat-toggle svg { width: 28px; height: 28px; display: block; }
+    .chat-panel {
+      position: fixed;
+      right: 16px;
+      bottom: 86px;
+      z-index: 30;
+      width: min(320px, calc(100vw - 32px));
+      height: min(420px, calc(100vh - 120px));
+      background: #1c1b19;
+      color: #f6f3ee;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-panel[hidden] { display: none; }
+    .chat-log { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .chat-line { margin: 0; font-size: 14px; line-height: 1.35; }
+    .chat-line strong { display: block; font-size: 12px; color: #9fd4ff; }
+    .chat-form { display: grid; gap: 8px; padding: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+    .chat-form input {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      background: #2a2926;
+      color: #f6f3ee;
+      padding: 10px 12px;
+      font: inherit;
+      font-size: 14px;
+    }
+    .chat-form button {
+      border: 0;
+      border-radius: 10px;
+      background: #128a3e;
+      color: white;
+      font-weight: 700;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
     @media (max-width: 860px) {
       .scoreboard { grid-template-columns: 1fr 1fr; }
       .center-score { grid-column: 1 / -1; order: -1; gap: 10px; }
@@ -409,7 +466,7 @@
             <path d="M2.2 12S5.8 6.2 12 6.2 21.8 12 21.8 12 18.2 17.8 12 17.8 2.2 12 2.2 12z" fill="none" stroke="currentColor" stroke-width="1.8"/>
             <circle cx="12" cy="12" r="2.7" fill="currentColor"/>
           </svg>
-          <span id="viewer-count">1</span>
+          <span id="viewer-count">31</span>
         </p>
       </div>
       <p id="online">Detectando seu estado...</p>
@@ -520,6 +577,19 @@
   </main>
 
   <footer>Simulador independente. Não é votação oficial e não tem ligação com o TSE.</footer>
-  <script src="script.js?v=9"></script>
+  <button class="chat-toggle" id="chat-toggle" type="button" aria-label="Abrir chat" aria-expanded="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M5 4.5h14a2.5 2.5 0 0 1 2.5 2.5v8A2.5 2.5 0 0 1 19 17.5H9.2L4.5 21v-3.5A2.5 2.5 0 0 1 2.5 15V7A2.5 2.5 0 0 1 5 4.5z"/>
+    </svg>
+  </button>
+  <aside class="chat-panel" id="chat-panel" hidden>
+    <div class="chat-log" id="chat-log"></div>
+    <form class="chat-form" id="chat-form">
+      <input id="chat-name" maxlength="20" placeholder="Seu nome" autocomplete="nickname">
+      <input id="chat-text" maxlength="180" placeholder="Mensagem">
+      <button type="submit">Enviar</button>
+    </form>
+  </aside>
+  <script src="script.js?v=10"></script>
 </body>
 </html>
