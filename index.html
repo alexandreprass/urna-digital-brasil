@@ -43,6 +43,21 @@
       background: rgba(18, 17, 15, 0.92);
       backdrop-filter: blur(10px);
     }
+    .contribute {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: fit-content;
+      margin: 0 auto 12px;
+      color: #3dce73;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+    }
+    .contribute:hover { color: #d8ffe8; }
+    .coin { width: 18px; height: 18px; display: block; flex: none; }
     .brand {
       display: flex;
       justify-content: space-between;
@@ -581,6 +596,22 @@
 </head>
 <body>
   <header class="top">
+    <a class="contribute" href="https://livepix.gg/meuvotodigital" target="_blank" rel="noopener noreferrer">
+      <svg class="coin" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" fill="#128a3e"/>
+        <circle cx="12" cy="12" r="10" fill="url(#coin-shine)"/>
+        <circle cx="12" cy="12" r="7.4" fill="none" stroke="#d8ffe8" stroke-width="1.2"/>
+        <path fill="#eaffe8" d="M13.2 7.2h-1.6v1.05c-1.15.16-2 .78-2 1.72 0 1.05 1.02 1.55 2.35 1.82l.55.1c.72.14 1.05.32 1.05.68 0 .38-.4.64-1.12.64-.78 0-1.28-.28-1.5-.78l-1.45.62c.38.95 1.28 1.5 2.5 1.66V16h1.6v-1.1c1.28-.18 2.15-.86 2.15-1.86 0-1.12-1.05-1.62-2.42-1.9l-.52-.1c-.62-.12-.95-.3-.95-.62 0-.32.34-.56.98-.56.7 0 1.12.24 1.32.66l1.42-.64c-.36-.86-1.12-1.38-2.25-1.52V7.2z"/>
+        <defs>
+          <radialGradient id="coin-shine" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#7dffb0"/>
+            <stop offset="55%" stop-color="#128a3e"/>
+            <stop offset="100%" stop-color="#0b5a28"/>
+          </radialGradient>
+        </defs>
+      </svg>
+      CONTRIBUA COM O PROJETO
+    </a>
     <div class="brand">
       <div class="brand-title">
         <h1>Urna Digital Brasil</h1>
@@ -739,6 +770,6 @@
       <button type="submit">Enviar</button>
     </form>
   </aside>
-  <script src="script.js?v=20"></script>
+  <script src="script.js?v=21"></script>
 </body>
 </html>
