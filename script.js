@@ -425,7 +425,7 @@ function subscribeLive() {
   channel = db.channel('urna-live');
   channel.on('broadcast', { event: 'chat' }, ({ payload }) => {
     if (!payload) return;
-    addChatLine(payload.name, payload.text, payload.color);
+    addChatLine(payload.name, payload.text, payload.color, payload.emoji);
   });
   channel.on('broadcast', { event: 'vote' }, ({ payload }) => {
     if (!payload) return;
@@ -450,45 +450,63 @@ function subscribeLive() {
 let lastChat = 0;
 let chatName = '';
 let chatColor = 'red';
+let chatEmoji = '😀';
 
-function addChatLine(name, text, color) {
+function paintChatIdentity() {
+  const locked = document.getElementById('chat-locked');
+  if (!locked) return;
+  locked.textContent = chatName + ' ' + chatEmoji;
+  locked.className = 'chat-locked ' + chatColor;
+}
+
+function addChatLine(name, text, color, emoji) {
   const log = document.getElementById('chat-log');
   if (!log) return;
   const cleanName = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 20);
   const cleanText = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 180);
   const tone = color === 'green' ? 'green' : 'red';
+  const mark = String(emoji || '').slice(0, 8);
   if (!cleanName || !cleanText) return;
   const line = document.createElement('p');
   line.className = 'chat-line ' + tone;
   const who = document.createElement('strong');
-  who.textContent = cleanName;
+  who.textContent = mark ? cleanName + ' ' + mark : cleanName;
+  const body = document.createElement('span');
+  body.textContent = cleanText;
   line.appendChild(who);
-  line.appendChild(document.createTextNode(cleanText));
+  line.appendChild(body);
   log.appendChild(line);
   while (log.children.length > 40) log.removeChild(log.firstChild);
   log.scrollTop = log.scrollHeight;
 }
 
+function saveChatName(event) {
+  event.preventDefault();
+  const cleanName = String(document.getElementById('chat-name').value || '').replace(/\s+/g, ' ').trim().slice(0, 20);
+  if (!cleanName) return;
+  chatName = cleanName;
+  document.getElementById('chat-setup').hidden = true;
+  document.getElementById('chat-compose').hidden = false;
+  paintChatIdentity();
+  document.getElementById('chat-text').focus();
+}
+
 function sendChat(event) {
   event.preventDefault();
+  if (!chatName) return;
   const textBox = document.getElementById('chat-text');
   const cleanText = String(textBox.value || '').replace(/\s+/g, ' ').trim().slice(0, 180);
-  if (!chatName) {
-    chatName = String(document.getElementById('chat-name').value || '').replace(/\s+/g, ' ').trim().slice(0, 20);
-    if (!chatName) return;
-    document.getElementById('chat-name').hidden = true;
-    const locked = document.getElementById('chat-locked');
-    locked.hidden = false;
-    locked.textContent = chatName;
-    locked.className = 'chat-locked ' + chatColor;
-  }
   if (!cleanText || !channel) return;
   const now = Date.now();
   if (now - lastChat < 1500) return;
   lastChat = now;
-  addChatLine(chatName, cleanText, chatColor);
+  addChatLine(chatName, cleanText, chatColor, chatEmoji);
   textBox.value = '';
-  channel.send({ type: 'broadcast', event: 'chat', payload: { name: chatName, text: cleanText, color: chatColor } });
+  channel.send({
+    type: 'broadcast',
+    event: 'chat',
+    payload: { name: chatName, text: cleanText, color: chatColor, emoji: chatEmoji }
+  });
 }
 
 document.querySelectorAll('.chat-colors button').forEach((button) => {
@@ -497,18 +515,22 @@ document.querySelectorAll('.chat-colors button').forEach((button) => {
     document.querySelectorAll('.chat-colors button').forEach((el) => {
       el.setAttribute('aria-pressed', el === button ? 'true' : 'false');
     });
-    document.getElementById('chat-locked').className = 'chat-locked ' + chatColor;
+    paintChatIdentity();
   });
 });
 
-document.getElementById('chat-toggle').addEventListener('click', () => {
-  const panel = document.getElementById('chat-panel');
-  const open = panel.hidden;
-  panel.hidden = !open;
-  document.getElementById('chat-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
-  if (open) document.getElementById(chatName ? 'chat-text' : 'chat-name').focus();
+document.querySelectorAll('.chat-emojis button').forEach((button) => {
+  button.addEventListener('click', () => {
+    chatEmoji = button.getAttribute('data-emoji') || '😀';
+    document.querySelectorAll('.chat-emojis button').forEach((el) => {
+      el.setAttribute('aria-pressed', el === button ? 'true' : 'false');
+    });
+    paintChatIdentity();
+  });
 });
-document.getElementById('chat-form').addEventListener('submit', sendChat);
+
+document.getElementById('chat-setup').addEventListener('submit', saveChatName);
+document.getElementById('chat-compose').addEventListener('submit', sendChat);
 
 document.querySelectorAll('[data-key]').forEach((button) => {
   button.addEventListener('click', () => {

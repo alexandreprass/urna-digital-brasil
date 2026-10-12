@@ -29,6 +29,7 @@
     body {
       font-family: "Segoe UI", system-ui, sans-serif;
       color: #f6f3ee;
+      padding-right: 200px;
       background:
         radial-gradient(900px 420px at 70% 0%, rgba(215, 25, 32, 0.16), transparent 60%),
         radial-gradient(800px 420px at 10% 0%, rgba(18, 138, 62, 0.14), transparent 55%),
@@ -369,48 +370,47 @@
     }
     .fly.lula { background: var(--red); }
     .fly.flavio { background: var(--green); }
-    .chat-toggle {
+    .chat-dock {
       position: fixed;
-      right: 16px;
-      bottom: 22px;
+      top: 0;
+      right: 0;
       z-index: 30;
-      width: 54px;
-      height: 54px;
-      border: 0;
-      border-radius: 50%;
-      background: #f6f3ee;
-      color: #171614;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-    }
-    .chat-toggle svg { width: 28px; height: 28px; display: block; }
-    .chat-panel {
-      position: fixed;
-      right: 16px;
-      bottom: 86px;
-      z-index: 30;
-      width: min(320px, calc(100vw - 32px));
-      height: min(420px, calc(100vh - 120px));
-      background: #1c1b19;
+      width: 200px;
+      height: 100vh;
+      background: #141311;
       color: #f6f3ee;
-      border-radius: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
-    .chat-panel[hidden] { display: none; }
+    .chat-dock h2 {
+      margin: 0;
+      padding: 14px 12px 10px;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+    }
     .chat-log { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
     .chat-line { margin: 0; font-size: 14px; line-height: 1.35; }
-    .chat-line strong { display: block; font-size: 12px; }
+    .chat-line strong, .chat-line span { display: block; }
+    .chat-line strong { font-size: 12px; }
     .chat-line.red strong { color: #ff5d57; }
     .chat-line.green strong { color: #3dce73; }
     .chat-form { display: grid; gap: 8px; padding: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
-    .chat-name-row { display: flex; align-items: center; gap: 10px; }
-    .chat-colors { display: flex; gap: 8px; flex: none; }
+    .chat-setup[hidden], .chat-compose[hidden] { display: none; }
+    .chat-colors { display: flex; gap: 8px; }
+    .chat-emojis { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chat-emojis button {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border: 0;
+      border-radius: 8px;
+      background: #2a2926;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .chat-emojis button[aria-pressed="true"] { box-shadow: 0 0 0 2px #f6f3ee; }
     .chat-colors button {
       width: 22px;
       height: 22px;
@@ -445,6 +445,9 @@
       cursor: pointer;
     }
     @media (max-width: 860px) {
+      body { padding-right: 148px; }
+      .chat-dock { width: 148px; }
+      .chat-emojis button { width: 28px; height: 28px; font-size: 15px; }
       .scoreboard { grid-template-columns: 1fr 1fr; }
       .center-score { grid-column: 1 / -1; order: -1; gap: 10px; }
       .share { font-size: 20px; }
@@ -595,26 +598,33 @@
   </main>
 
   <footer>Simulador independente. Não é votação oficial e não tem ligação com o TSE.</footer>
-  <button class="chat-toggle" id="chat-toggle" type="button" aria-label="Abrir chat" aria-expanded="false">
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path fill="currentColor" d="M5 4.5h14a2.5 2.5 0 0 1 2.5 2.5v8A2.5 2.5 0 0 1 19 17.5H9.2L4.5 21v-3.5A2.5 2.5 0 0 1 2.5 15V7A2.5 2.5 0 0 1 5 4.5z"/>
-    </svg>
-  </button>
-  <aside class="chat-panel" id="chat-panel" hidden>
+  <aside class="chat-dock" id="chat-dock">
+    <h2>CHAT</h2>
     <div class="chat-log" id="chat-log"></div>
-    <form class="chat-form" id="chat-form">
-      <div class="chat-name-row" id="chat-name-row">
-        <input id="chat-name" maxlength="20" placeholder="Seu nome" autocomplete="nickname">
-        <div class="chat-colors">
-          <button type="button" class="red" data-color="red" aria-pressed="true" aria-label="Vermelho"></button>
-          <button type="button" class="green" data-color="green" aria-pressed="false" aria-label="Verde"></button>
-        </div>
+    <form class="chat-form chat-setup" id="chat-setup">
+      <input id="chat-name" maxlength="20" placeholder="Insira seu nome" autocomplete="nickname">
+      <button type="submit">Salvar</button>
+    </form>
+    <form class="chat-form chat-compose" id="chat-compose" hidden>
+      <p class="chat-locked red" id="chat-locked"></p>
+      <div class="chat-colors">
+        <button type="button" class="red" data-color="red" aria-pressed="true" aria-label="Vermelho"></button>
+        <button type="button" class="green" data-color="green" aria-pressed="false" aria-label="Verde"></button>
       </div>
-      <p class="chat-locked red" id="chat-locked" hidden></p>
+      <div class="chat-emojis">
+        <button type="button" data-emoji="😀" aria-pressed="true">😀</button>
+        <button type="button" data-emoji="😂">😂</button>
+        <button type="button" data-emoji="🔥">🔥</button>
+        <button type="button" data-emoji="👏">👏</button>
+        <button type="button" data-emoji="❤️">❤️</button>
+        <button type="button" data-emoji="👍">👍</button>
+        <button type="button" data-emoji="🇧🇷">🇧🇷</button>
+        <button type="button" data-emoji="😮">😮</button>
+      </div>
       <input id="chat-text" maxlength="180" placeholder="Mensagem">
       <button type="submit">Enviar</button>
     </form>
   </aside>
-  <script src="script.js?v=11"></script>
+  <script src="script.js?v=13"></script>
 </body>
 </html>
