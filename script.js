@@ -470,7 +470,15 @@ function addChatLine(name, text, color) {
   const who = document.createElement('strong');
   who.textContent = cleanName;
   const body = document.createElement('span');
-  body.textContent = cleanText;
+  const flag = '🇧🇷';
+  const parts = cleanText.split(flag);
+  parts.forEach((part, index) => {
+    if (part) body.appendChild(document.createTextNode(part));
+    if (index < parts.length - 1) {
+      const source = document.querySelector('.chat-emojis .chat-flag');
+      if (source) body.appendChild(source.cloneNode(true));
+    }
+  });
   line.appendChild(who);
   line.appendChild(body);
   log.appendChild(line);
@@ -537,6 +545,16 @@ document.querySelectorAll('.chat-emojis button').forEach((button) => {
 
 document.getElementById('chat-setup').addEventListener('submit', saveChatName);
 document.getElementById('chat-compose').addEventListener('submit', sendChat);
+
+const chatToggle = document.getElementById('chat-toggle');
+if (chatToggle) {
+  chatToggle.addEventListener('click', () => {
+    const dock = document.getElementById('chat-dock');
+    const open = dock.classList.toggle('is-open');
+    chatToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    chatToggle.setAttribute('aria-label', open ? 'Fechar chat' : 'Abrir chat');
+  });
+}
 
 document.querySelectorAll('[data-key]').forEach((button) => {
   button.addEventListener('click', () => {
