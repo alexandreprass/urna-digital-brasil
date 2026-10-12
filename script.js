@@ -46,9 +46,10 @@ async function init() {
   document.getElementById('online').textContent = 'Seu voto entra em ' + placeName();
   try {
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const loaded = await loadVotes();
+    const loaded = await syncBoard();
     if (!loaded) loadLocalVotes();
     await subscribeLive();
+    setInterval(syncBoard, 60000);
   } catch (error) {
     loadLocalVotes();
   }
@@ -149,8 +150,15 @@ function confirmar() {
   else setHelp('Número inexistente. Aperte CORRIGE.');
 }
 
-function finishVote(candidate) {
-  if (!vote(candidate)) return;
+async function finishVote(candidate) {
+  if (locked) return;
+  locked = true;
+  const ok = await vote(candidate);
+  if (!ok) {
+    locked = false;
+    renderScreen();
+    return;
+  }
   showFim();
 }
 
@@ -204,33 +212,37 @@ function setHelp(text) {
   document.getElementById('screen-help').textContent = text;
 }
 
-function vote(candidate) {
+async function vote(candidate) {
   const lastVote = Number(localStorage.getItem('lastVote') || 0);
-  if (Date.now() - lastVote < 2000) {
-    setHelp('Aguarde 2 segundos entre votos.');
+  if (Date.now() - lastVote < 60000) {
+    setHelp('Aguarde 1 minuto entre votos.');
+    return false;
+  }
+  if (!db) {
+    setHelp('Sem conexão. Tente de novo.');
+    return false;
+  }
+  const abroad = origin.kind === 'country';
+  const call = abroad
+    ? db.rpc('cast_abroad_vote', { p_candidate: candidate })
+    : db.rpc('cast_vote', { p_candidate: candidate, p_state: origin.code });
+  const { error } = await call;
+  if (error) {
+    const message = String(error.message || '');
+    if (message.indexOf('minuto') !== -1) setHelp('Aguarde 1 minuto entre votos.');
+    else setHelp('Não foi possível registrar o voto.');
     return false;
   }
   localStorage.setItem('lastVote', String(Date.now()));
-  if (origin.kind === 'country') {
-    applyAbroad(candidate, true);
-    if (channel) {
-      channel.send({ type: 'broadcast', event: 'vote', payload: { candidate: candidate, abroad: true } });
-    }
-    if (db) {
-      db.rpc('cast_abroad_vote', { p_candidate: candidate }).then(({ error }) => {
-        if (error) console.warn(error.message || error);
-      });
-    }
-  } else {
-    applyVote(candidate, origin.code, true);
-    if (channel) {
-      channel.send({ type: 'broadcast', event: 'vote', payload: { candidate: candidate, state: origin.code } });
-    }
-    if (db) {
-      db.rpc('cast_vote', { p_candidate: candidate, p_state: origin.code }).then(({ error }) => {
-        if (error) console.warn(error.message || error);
-      });
-    }
+  if (abroad) flyVote(candidate, '', true);
+  else flyVote(candidate, origin.code, false);
+  await loadVotes();
+  await loadClassification();
+  if (channel) {
+    const payload = abroad
+      ? { candidate: candidate, abroad: true }
+      : { candidate: candidate, state: origin.code };
+    channel.send({ type: 'broadcast', event: 'vote', payload: payload });
   }
   return true;
 }
@@ -410,6 +422,61 @@ async function loadVotes() {
   return true;
 }
 
+async function syncBoard() {
+  if (!db) return false;
+  await db.rpc('close_voting_day');
+  const loaded = await loadVotes();
+  await loadClassification();
+  return loaded;
+}
+
+function paintClassification(rows) {
+  const list = document.getElementById('class-list');
+  const empty = document.getElementById('class-empty');
+  if (!list || !empty) return;
+  list.textContent = '';
+  if (!rows || !rows.length) {
+    empty.hidden = false;
+    return;
+  }
+  empty.hidden = true;
+  rows.forEach((row) => {
+    const lula = Number(row.lula) || 0;
+    const flavio = Number(row.flavio) || 0;
+    const card = document.createElement('article');
+    card.className = 'class-card';
+    const title = document.createElement('h3');
+    const when = new Date(String(row.day) + 'T12:00:00');
+    const dateText = Number.isNaN(when.getTime()) ? String(row.day) : when.toLocaleDateString('pt-BR');
+    title.textContent = row.winner === 'empate' ? dateText + ' · Empate' : dateText;
+    card.appendChild(title);
+    const ranked = lula === flavio
+      ? [{ place: '1º', name: 'Lula', votes: lula, tone: 'lula' }, { place: '1º', name: 'Flávio', votes: flavio, tone: 'flavio' }]
+      : (lula > flavio
+        ? [{ place: '1º', name: 'Lula', votes: lula, tone: 'lula' }, { place: '2º', name: 'Flávio', votes: flavio, tone: 'flavio' }]
+        : [{ place: '1º', name: 'Flávio', votes: flavio, tone: 'flavio' }, { place: '2º', name: 'Lula', votes: lula, tone: 'lula' }]);
+    ranked.forEach((item) => {
+      const line = document.createElement('p');
+      line.className = 'class-row ' + item.tone;
+      const who = document.createElement('span');
+      who.textContent = item.place + ' ' + item.name;
+      const count = document.createElement('span');
+      count.textContent = item.votes.toLocaleString('pt-BR') + ' votos';
+      line.appendChild(who);
+      line.appendChild(count);
+      card.appendChild(line);
+    });
+    list.appendChild(card);
+  });
+}
+
+async function loadClassification() {
+  if (!db) return;
+  const { data, error } = await db.from('day_results').select('day, lula, flavio, winner').order('day', { ascending: false }).limit(30);
+  if (error) return;
+  paintClassification(data || []);
+}
+
 function paintViewers() {
   const el = document.getElementById('viewer-count');
   if (!el) return;
@@ -428,9 +495,11 @@ function subscribeLive() {
     addChatLine(payload.name, payload.text, payload.color);
   });
   channel.on('broadcast', { event: 'vote' }, ({ payload }) => {
-    if (!payload) return;
-    if (payload.abroad || payload.country) applyAbroad(payload.candidate, true);
-    else applyVote(payload.candidate, payload.state, true);
+    if (!payload || !CANDIDATES[payload.candidate]) return;
+    if (payload.abroad || payload.country) flyVote(payload.candidate, '', true);
+    else if (payload.state) flyVote(payload.candidate, payload.state, false);
+    loadVotes();
+    loadClassification();
   });
   channel.on('presence', { event: 'sync' }, paintViewers);
   channel.on('presence', { event: 'join' }, paintViewers);
