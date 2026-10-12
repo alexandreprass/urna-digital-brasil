@@ -535,6 +535,10 @@
     .chat-toggle { display: none; }
     @media (max-width: 860px) {
       body { padding-right: 0; }
+      .brand { flex-wrap: wrap; align-items: flex-start; gap: 4px 12px; }
+      .brand-title { flex: 1 1 auto; }
+      h1 { font-size: 16px; }
+      #online { flex: 1 1 100%; line-height: 1.35; }
       .chat-toggle {
         display: grid;
         place-items: center;
@@ -770,6 +774,6 @@
       <button type="submit">Enviar</button>
     </form>
   </aside>
-  <script src="script.js?v=21"></script>
+  <script src="script.js?v=22"></script>
 </body>
 </html>
