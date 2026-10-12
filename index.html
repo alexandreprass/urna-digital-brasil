@@ -377,26 +377,68 @@
       z-index: 30;
       width: 200px;
       height: 100vh;
-      background: #141311;
       color: #f6f3ee;
-      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      background:
+        radial-gradient(240px 280px at 80% -8%, rgba(215, 25, 32, 0.34), transparent 68%),
+        radial-gradient(220px 260px at 10% 108%, rgba(18, 138, 62, 0.30), transparent 70%),
+        #12110f;
+      box-shadow: -18px 0 40px rgba(0, 0, 0, 0.38);
     }
     .chat-dock h2 {
       margin: 0;
-      padding: 14px 12px 10px;
-      font-size: 13px;
-      letter-spacing: 0.08em;
+      padding: 16px 12px 12px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-align: center;
     }
-    .chat-log { flex: 1; overflow: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-    .chat-line { margin: 0; font-size: 14px; line-height: 1.35; }
+    .chat-dock h2::after {
+      content: "";
+      display: block;
+      height: 4px;
+      margin: 10px 6px 0;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--red), var(--green));
+    }
+    .chat-log {
+      flex: 1;
+      overflow: auto;
+      padding: 4px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .chat-log::-webkit-scrollbar { width: 6px; }
+    .chat-log::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16); border-radius: 999px; }
+    .chat-line {
+      margin: 0;
+      padding: 8px 10px;
+      font-size: 13px;
+      line-height: 1.35;
+      background: #1c1b19;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-left: 3px solid #ff5d57;
+      border-radius: 14px;
+    }
+    .chat-line.green { border-left-color: #3dce73; }
     .chat-line strong, .chat-line span { display: block; }
-    .chat-line strong { font-size: 12px; }
+    .chat-line strong { font-size: 11px; letter-spacing: 0.03em; }
+    .chat-line span { color: #f6f3ee; }
     .chat-line.red strong { color: #ff5d57; }
     .chat-line.green strong { color: #3dce73; }
-    .chat-form { display: grid; gap: 8px; padding: 10px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+    .chat-form {
+      display: grid;
+      gap: 8px;
+      margin: 0 8px 10px;
+      padding: 10px;
+      background: #1c1b19;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+    }
     .chat-setup[hidden], .chat-compose[hidden] { display: none; }
     .chat-colors { display: flex; gap: 8px; }
     .chat-emojis { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -404,9 +446,9 @@
       width: 34px;
       height: 34px;
       padding: 0;
-      border: 0;
-      border-radius: 8px;
-      background: #2a2926;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      background: #12110f;
       cursor: pointer;
       font-size: 18px;
     }
@@ -422,31 +464,34 @@
     .chat-colors button.red { background: var(--red); }
     .chat-colors button.green { background: var(--green); }
     .chat-colors button[aria-pressed="true"] { box-shadow: 0 0 0 2px #f6f3ee; }
-    .chat-locked { margin: 0; font-size: 14px; font-weight: 800; }
+    .chat-locked { margin: 0; font-size: 13px; font-weight: 800; }
     .chat-locked.red { color: #ff5d57; }
     .chat-locked.green { color: #3dce73; }
     .chat-form input {
       width: 100%;
-      border: 0;
-      border-radius: 10px;
-      background: #2a2926;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      background: #12110f;
       color: #f6f3ee;
       padding: 10px 12px;
       font: inherit;
       font-size: 14px;
     }
+    .chat-form input::placeholder { color: #8d877e; }
     .chat-form button[type="submit"] {
       border: 0;
-      border-radius: 10px;
-      background: #128a3e;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--red), var(--green));
       color: white;
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: 0.04em;
       padding: 10px 12px;
       cursor: pointer;
     }
     @media (max-width: 860px) {
       body { padding-right: 148px; }
       .chat-dock { width: 148px; }
+      .chat-form { margin: 0 6px 8px; padding: 8px; }
       .chat-emojis button { width: 28px; height: 28px; font-size: 15px; }
       .scoreboard { grid-template-columns: 1fr 1fr; }
       .center-score { grid-column: 1 / -1; order: -1; gap: 10px; }
@@ -625,6 +670,6 @@
       <button type="submit">Enviar</button>
     </form>
   </aside>
-  <script src="script.js?v=13"></script>
+  <script src="script.js?v=14"></script>
 </body>
 </html>
