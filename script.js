@@ -425,7 +425,7 @@ function subscribeLive() {
   channel = db.channel('urna-live');
   channel.on('broadcast', { event: 'chat' }, ({ payload }) => {
     if (!payload) return;
-    addChatLine(payload.name, payload.text, payload.color, payload.emoji);
+    addChatLine(payload.name, payload.text, payload.color);
   });
   channel.on('broadcast', { event: 'vote' }, ({ payload }) => {
     if (!payload) return;
@@ -450,27 +450,25 @@ function subscribeLive() {
 let lastChat = 0;
 let chatName = '';
 let chatColor = 'red';
-let chatEmoji = '😀';
 
 function paintChatIdentity() {
   const locked = document.getElementById('chat-locked');
   if (!locked) return;
-  locked.textContent = chatName + ' ' + chatEmoji;
+  locked.textContent = chatName;
   locked.className = 'chat-locked ' + chatColor;
 }
 
-function addChatLine(name, text, color, emoji) {
+function addChatLine(name, text, color) {
   const log = document.getElementById('chat-log');
   if (!log) return;
   const cleanName = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 20);
   const cleanText = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 180);
   const tone = color === 'green' ? 'green' : 'red';
-  const mark = String(emoji || '').slice(0, 8);
   if (!cleanName || !cleanText) return;
   const line = document.createElement('p');
   line.className = 'chat-line ' + tone;
   const who = document.createElement('strong');
-  who.textContent = mark ? cleanName + ' ' + mark : cleanName;
+  who.textContent = cleanName;
   const body = document.createElement('span');
   body.textContent = cleanText;
   line.appendChild(who);
@@ -500,13 +498,25 @@ function sendChat(event) {
   const now = Date.now();
   if (now - lastChat < 1500) return;
   lastChat = now;
-  addChatLine(chatName, cleanText, chatColor, chatEmoji);
+  addChatLine(chatName, cleanText, chatColor);
   textBox.value = '';
   channel.send({
     type: 'broadcast',
     event: 'chat',
-    payload: { name: chatName, text: cleanText, color: chatColor, emoji: chatEmoji }
+    payload: { name: chatName, text: cleanText, color: chatColor }
   });
+}
+
+function insertChatEmoji(emoji) {
+  const box = document.getElementById('chat-text');
+  if (!box || !emoji) return;
+  const start = box.selectionStart == null ? box.value.length : box.selectionStart;
+  const end = box.selectionEnd == null ? box.value.length : box.selectionEnd;
+  const next = (box.value.slice(0, start) + emoji + box.value.slice(end)).slice(0, 180);
+  const caret = Math.min(start + emoji.length, next.length);
+  box.value = next;
+  box.focus();
+  box.setSelectionRange(caret, caret);
 }
 
 document.querySelectorAll('.chat-colors button').forEach((button) => {
@@ -521,11 +531,7 @@ document.querySelectorAll('.chat-colors button').forEach((button) => {
 
 document.querySelectorAll('.chat-emojis button').forEach((button) => {
   button.addEventListener('click', () => {
-    chatEmoji = button.getAttribute('data-emoji') || '😀';
-    document.querySelectorAll('.chat-emojis button').forEach((el) => {
-      el.setAttribute('aria-pressed', el === button ? 'true' : 'false');
-    });
-    paintChatIdentity();
+    insertChatEmoji(button.getAttribute('data-emoji') || '');
   });
 });
 

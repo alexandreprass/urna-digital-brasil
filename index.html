@@ -452,7 +452,14 @@
       cursor: pointer;
       font-size: 18px;
     }
-    .chat-emojis button[aria-pressed="true"] { box-shadow: 0 0 0 2px #f6f3ee; }
+    .chat-emoji-label {
+      margin: 0;
+      color: #8d877e;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
     .chat-colors button {
       width: 22px;
       height: 22px;
@@ -656,20 +663,21 @@
         <button type="button" class="red" data-color="red" aria-pressed="true" aria-label="Vermelho"></button>
         <button type="button" class="green" data-color="green" aria-pressed="false" aria-label="Verde"></button>
       </div>
+      <p class="chat-emoji-label">Emojis</p>
       <div class="chat-emojis">
-        <button type="button" data-emoji="😀" aria-pressed="true">😀</button>
-        <button type="button" data-emoji="😂">😂</button>
-        <button type="button" data-emoji="🔥">🔥</button>
-        <button type="button" data-emoji="👏">👏</button>
-        <button type="button" data-emoji="❤️">❤️</button>
-        <button type="button" data-emoji="👍">👍</button>
-        <button type="button" data-emoji="🇧🇷">🇧🇷</button>
-        <button type="button" data-emoji="😮">😮</button>
+        <button type="button" data-emoji="😀" aria-label="😀">😀</button>
+        <button type="button" data-emoji="😂" aria-label="😂">😂</button>
+        <button type="button" data-emoji="🔥" aria-label="🔥">🔥</button>
+        <button type="button" data-emoji="👏" aria-label="👏">👏</button>
+        <button type="button" data-emoji="❤️" aria-label="❤️">❤️</button>
+        <button type="button" data-emoji="👍" aria-label="👍">👍</button>
+        <button type="button" data-emoji="🇧🇷" aria-label="🇧🇷">🇧🇷</button>
+        <button type="button" data-emoji="😮" aria-label="😮">😮</button>
       </div>
       <input id="chat-text" maxlength="180" placeholder="Mensagem">
       <button type="submit">Enviar</button>
     </form>
   </aside>
-  <script src="script.js?v=14"></script>
+  <script src="script.js?v=15"></script>
 </body>
 </html>
