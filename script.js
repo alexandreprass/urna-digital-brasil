@@ -499,11 +499,17 @@ function paintClassification(rows) {
     ranked.forEach((item) => {
       const line = document.createElement('p');
       line.className = 'class-row ' + item.tone;
-      const who = document.createElement('span');
-      who.textContent = item.place + ' ' + item.name;
+      const place = document.createElement('span');
+      place.className = 'class-place';
+      place.textContent = item.place;
+      const name = document.createElement('span');
+      name.className = 'class-name';
+      name.textContent = item.name;
       const count = document.createElement('span');
-      count.textContent = item.votes.toLocaleString('pt-BR') + ' votos';
-      line.appendChild(who);
+      count.className = 'class-votes';
+      count.textContent = item.votes.toLocaleString('pt-BR');
+      line.appendChild(place);
+      line.appendChild(name);
       line.appendChild(count);
       card.appendChild(line);
     });

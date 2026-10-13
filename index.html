@@ -116,7 +116,7 @@
       font-variant-numeric: tabular-nums;
     }
     .lula strong { color: #ff5d57; }
-    .flavio { flex-direction: row-reverse; text-align: right; }
+    .score.flavio { flex-direction: row-reverse; text-align: right; }
     .flavio strong { color: #3dce73; }
     .score.lula,
     .score.flavio {
@@ -386,10 +386,21 @@
       padding: 12px 14px;
     }
     .class-card h3 { margin: 0 0 8px; color: #b7b1a8; font-size: 13px; font-weight: 700; }
-    .class-row { display: flex; justify-content: space-between; gap: 12px; font-weight: 800; line-height: 1.4; }
+    .class-row {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: baseline;
+      gap: 10px;
+      margin: 4px 0 0;
+      font-weight: 800;
+      line-height: 1.35;
+      text-align: left;
+    }
     .class-row.lula { color: #ff5d57; }
     .class-row.flavio { color: #3dce73; }
-    .class-row span:first-child { font-weight: 700; }
+    .class-place { width: 1.8em; flex: none; }
+    .class-name, .class-votes { flex: none; }
     footer { text-align: center; color: #8d877e; font-size: 12px; padding: 0 16px 28px; }
     .fly {
       position: fixed;
@@ -776,6 +787,6 @@
       <button type="submit">Enviar</button>
     </form>
   </aside>
-  <script src="script.js?v=23"></script>
+  <script src="script.js?v=24"></script>
 </body>
 </html>
